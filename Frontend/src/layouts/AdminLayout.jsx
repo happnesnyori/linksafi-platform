@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminNavbar from '../components/admin/AdminNavbar';
-import '../../styles/admin.css';
+import '../styles/admin.css';
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,7 +19,7 @@ const AdminLayout = () => {
         <div className="admin-layout">
             <AdminSidebar mobileOpen={sidebarOpen} onMobileClose={handleMobileClose} />
             <div className="admin-layout-main">
-                <AdminNavbar onSearch={() => {}} />
+                <AdminNavbar onSearch={() => { }} />
                 <main className="admin-layout-content">
                     <Outlet />
                 </main>

@@ -4,35 +4,18 @@ import {
     Building2,
     Users,
     FileText,
-    Star,
-    TrendingUp,
     Clock,
-    CheckCircle,
-    XCircle,
     AlertCircle,
-    RefreshCw,
-    Search,
-    Filter,
-    Plus,
-    Edit,
-    Trash2,
     Eye,
-    Ban,
-    UserCheck,
-    Shield,
-    Star as StarIcon,
-    ThumbsUp,
-    ThumbsDown,
-    ChevronLeft,
-    ChevronRight,
+    ArrowUpRight,
 } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import adminService from '../../services/adminService';
 import '../../styles/admin.css';
 
-const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
-    <div className="admin-stat-card">
-        <div className="admin-stat-icon" style={{ background: color }}>
+const StatCard = ({ title, value, icon: Icon, tone, subtitle }) => (
+    <div className={`admin-stat-card admin-stat-card--${tone}`}>
+        <div className="admin-stat-icon">
             <Icon size={22} />
         </div>
         <div className="admin-stat-content">
@@ -45,18 +28,28 @@ const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
+    const [pendingCompanies, setPendingCompanies] = useState([]);
+    const [sortDirection, setSortDirection] = useState('desc');
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { addToast } = useToast();
 
     useEffect(() => {
-        loadStats();
+        loadDashboard();
+        const refreshHandler = () => loadDashboard();
+        window.addEventListener('refresh-admin-dashboard', refreshHandler);
+        return () => window.removeEventListener('refresh-admin-dashboard', refreshHandler);
     }, []);
 
-    const loadStats = async () => {
+    const loadDashboard = async () => {
+        setLoading(true);
         try {
-            const data = await adminService.getDashboardStats();
-            setStats(data);
+            const [dashboardStats, companiesResponse] = await Promise.all([
+                adminService.getDashboardStats(),
+                adminService.getCompanies({ status: 'pending' }, 1, 5),
+            ]);
+            setStats(dashboardStats);
+            setPendingCompanies(companiesResponse?.results || companiesResponse || []);
         } catch (err) {
             addToast('Failed to load dashboard stats', 'error');
         } finally {
@@ -81,9 +74,7 @@ export default function AdminDashboard() {
                     <h1 className="admin-page-title">Dashboard Overview</h1>
                     <p className="admin-page-subtitle">Monitor and manage the LinkSafi platform</p>
                 </div>
-                <button className="btn btn-secondary" onClick={loadStats}>
-                    <RefreshCw size={16} /> Refresh
-                </button>
+                <span className="admin-page-context">Today&apos;s platform snapshot</span>
             </div>
 
             <div className="admin-stats-grid">
@@ -91,84 +82,82 @@ export default function AdminDashboard() {
                     title="Total Companies"
                     value={stats.total_companies}
                     icon={Building2}
-                    color="#0d9488"
+                    tone="teal"
                     subtitle={`${stats.approved_companies} approved`}
                 />
                 <StatCard
-                    title="Pending Companies"
+                    title="Pending Approvals"
                     value={stats.pending_companies}
                     icon={Clock}
-                    color="#f59e0b"
+                    tone="orange"
                     subtitle="Awaiting review"
                 />
                 <StatCard
-                    title="Suspended Companies"
-                    value={stats.suspended_companies}
-                    icon={Ban}
-                    color="#ef4444"
-                    subtitle="Temporarily inactive"
-                />
-                <StatCard
-                    title="Total Customers"
-                    value={stats.total_customers}
+                    title="Active Customers"
+                    value={stats.total_organizations}
                     icon={Users}
-                    color="#2563eb"
-                    subtitle={`${stats.total_organizations} orgs, ${stats.total_company_users} companies`}
+                    tone="blue"
+                    subtitle="Organizations on LinkSafi"
                 />
                 <StatCard
-                    title="Total Service Requests"
-                    value={stats.total_service_requests}
-                    icon={FileText}
-                    color="#8b5cf6"
-                    subtitle="All time"
-                />
-                <StatCard
-                    title="Pending Requests"
+                    title="Open Service Requests"
                     value={stats.pending_requests}
-                    icon={AlertCircle}
-                    color="#f59e0b"
+                    icon={FileText}
+                    tone="navy"
                     subtitle="Awaiting company response"
-                />
-                <StatCard
-                    title="Completed Requests"
-                    value={stats.completed_requests}
-                    icon={CheckCircle}
-                    color="#10b981"
-                    subtitle="Successfully finished"
-                />
-                <StatCard
-                    title="Rejected Requests"
-                    value={stats.rejected_requests}
-                    icon={XCircle}
-                    color="#ef4444"
-                    subtitle="Declined by companies"
                 />
             </div>
 
-            <div className="admin-quick-actions">
-                <h2>Quick Actions</h2>
-                <div className="admin-quick-actions-grid">
-                    <button className="admin-quick-action" onClick={() => navigate('/admin/companies?status=pending')}>
-                        <Clock size={28} />
-                        <span>Review Pending Companies</span>
-                        <small>{stats.pending_companies} awaiting approval</small>
-                    </button>
-                    <button className="admin-quick-action" onClick={() => navigate('/admin/requests?status=pending')}>
-                        <AlertCircle size={28} />
-                        <span>Review Pending Requests</span>
-                        <small>{stats.pending_requests} pending</small>
-                    </button>
-                    <button className="admin-quick-action" onClick={() => navigate('/admin/companies')}>
-                        <Building2 size={28} />
-                        <span>Manage Companies</span>
-                        <small>View all companies</small>
-                    </button>
-                    <button className="admin-quick-action" onClick={() => navigate('/admin/customers')}>
-                        <Users size={28} />
-                        <span>Manage Customers</span>
-                        <small>View all users</small>
+            <section className="admin-dashboard-section">
+                <div className="admin-section-heading">
+                    <div>
+                        <span className="admin-section-eyebrow">Needs attention</span>
+                        <h2>Pending approvals</h2>
+                    </div>
+                    <button className="admin-text-button" onClick={() => navigate('/admin/companies?status=pending')}>
+                        View all <ArrowUpRight size={16} />
                     </button>
                 </div>
+                <div className="admin-table-container">
+                    <table className="admin-table admin-dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Location</th>
+                                <th>
+                                    <button className="admin-sort-button" onClick={() => setSortDirection((value) => value === 'desc' ? 'asc' : 'desc')}>
+                                        Submitted <span>{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                                    </button>
+                                </th>
+                                <th>Status</th>
+                                <th aria-label="Actions" />
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pendingCompanies.length === 0 ? (
+                                <tr><td colSpan="5" className="admin-dashboard-empty">No companies are waiting for approval.</td></tr>
+                            ) : [...pendingCompanies].sort((a, b) => {
+                                const first = new Date(a.created_at || 0).getTime();
+                                const second = new Date(b.created_at || 0).getTime();
+                                return sortDirection === 'desc' ? second - first : first - second;
+                            }).map((company) => (
+                                <tr key={company.id}>
+                                    <td><strong className="admin-table-cell-primary">{company.name}</strong><span className="admin-table-cell-muted">{company.email || company.owner_email || 'No email'}</span></td>
+                                    <td>{company.location || 'Not provided'}</td>
+                                    <td>{company.created_at ? new Date(company.created_at).toLocaleDateString() : 'Recently'}</td>
+                                    <td><span className="admin-status-badge admin-badge-pending">Pending</span></td>
+                                    <td><button className="admin-icon-button" onClick={() => navigate(`/admin/companies/${company.id}`)} aria-label={`View ${company.name}`}><Eye size={16} /></button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div className="admin-dashboard-links">
+                <button onClick={() => navigate('/admin/requests?status=pending')}><AlertCircle size={18} /><span>Review pending requests</span><ArrowUpRight size={15} /></button>
+                <button onClick={() => navigate('/admin/companies')}><Building2 size={18} /><span>Manage all companies</span><ArrowUpRight size={15} /></button>
+                <button onClick={() => navigate('/admin/customers')}><Users size={18} /><span>View customer directory</span><ArrowUpRight size={15} /></button>
             </div>
         </div>
     );

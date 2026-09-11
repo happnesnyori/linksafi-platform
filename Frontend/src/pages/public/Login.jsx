@@ -25,10 +25,8 @@ export default function Login() {
                 throw new Error('Please fill in both username and password.');
             }
 
-            // Supports either email or username
             const credentials = {
-                email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@linksafi.com`,
-                username: usernameOrEmail,
+                email: usernameOrEmail,
                 password,
             };
 
@@ -72,15 +70,15 @@ export default function Login() {
                 </button>
 
                 {/* Title & Brand Badge */}
-                    <div className="login-header">
-                        <div className="login-brand-badge">
-                            <div className="login-icon-wrap">
-                                <Sparkles size={18} className="login-logo-icon" />
-                            </div>
-                            <span className="login-brand-text">Link<span>Safi</span></span>
+                <div className="login-header">
+                    <div className="login-brand-badge">
+                        <div className="login-icon-wrap">
+                            <Sparkles size={18} className="login-logo-icon" />
                         </div>
-                        <h1 className="login-title">LOGIN</h1>
+                        <span className="login-brand-text">Link<span>Safi</span></span>
                     </div>
+                    <h1 className="login-title">LOGIN</h1>
+                </div>
 
                 {/* Error Banner */}
                 {error && (
@@ -99,7 +97,7 @@ export default function Login() {
                             className="login-pill-input"
                             value={usernameOrEmail}
                             onChange={(e) => setUsernameOrEmail(e.target.value)}
-                            placeholder="Username"
+                            placeholder="Email or username"
                             autoComplete="username"
                             required
                         />

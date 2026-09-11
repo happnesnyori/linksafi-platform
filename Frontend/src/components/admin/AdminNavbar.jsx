@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Bell, User, Settings, LogOut, Menu } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchTerm, setSearchTerm] = useState('');
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef(null);
@@ -40,6 +41,17 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
     };
 
     const adminName = user?.name || user?.email || 'Admin';
+    const pageTitle = location.pathname === '/admin'
+        ? 'Dashboard'
+        : location.pathname.includes('/companies')
+            ? 'Companies'
+            : location.pathname.includes('/customers')
+                ? 'Customers'
+                : location.pathname.includes('/requests')
+                    ? 'Service Requests'
+                    : location.pathname.includes('/reviews')
+                        ? 'Reviews'
+                        : 'Admin workspace';
 
     return (
         <header className="admin-navbar">
@@ -56,6 +68,10 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
                     <Menu size={20} />
                 </button>
 
+                <div className="admin-navbar-heading">
+                    <span className="admin-navbar-kicker">LinkSafi / Admin</span>
+                    <strong>{pageTitle}</strong>
+                </div>
                 <form
                     className="admin-search-field"
                     role="search"
@@ -75,6 +91,13 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
             </div>
 
             <div className="admin-navbar-right">
+                <button
+                    type="button"
+                    className="admin-refresh-button"
+                    onClick={() => window.dispatchEvent(new Event('refresh-admin-dashboard'))}
+                >
+                    <span>Refresh</span>
+                </button>
                 <button
                     type="button"
                     className={`admin-nav-button admin-nav-button--bell ${pendingApprovals > 0 ? 'has-alert' : ''}`}

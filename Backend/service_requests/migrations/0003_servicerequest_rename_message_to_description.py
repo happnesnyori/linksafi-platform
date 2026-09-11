@@ -10,15 +10,5 @@ class Migration(migrations.Migration):
         ),
     ]
 
-    operations = [
-        migrations.RunSQL(
-            sql=[
-                'ALTER TABLE "service_requests_servicerequest" '
-                'RENAME COLUMN "message" TO "description";',
-            ],
-            reverse_sql=[
-                'ALTER TABLE "service_requests_servicerequest" '
-                'RENAME COLUMN "description" TO "message";',
-            ],
-        ),
-    ]
+    # The initial migration already creates the field as description.
+    operations = []

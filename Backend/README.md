@@ -41,11 +41,14 @@ Django REST Framework backend for the LinkSafi platform.
    python manage.py migrate
    ```
 
-5. Create a superuser (optional, for /admin):
+5. Create an admin account for the React dashboard:
 
    ```powershell
    python manage.py createsuperuser
    ```
+
+   Django will ask for the email, username, and password interactively. Admin
+   access is stored on the user record through `is_staff` and `is_superuser`.
 
 6. Run the dev server:
 
