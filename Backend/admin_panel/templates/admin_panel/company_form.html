@@ -1,0 +1,50 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="card">
+    <h3 style="font-size:15px;font-weight:700;color:#374151;margin-bottom:16px;">{{ page_title }}</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="{{ form.owner.id_for_label }}">Owner *</label>
+        {{ form.owner }}
+        {{ form.owner.errors }}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.name.id_for_label }}">Company Name *</label>
+        {{ form.name }}
+        {{ form.name.errors }}
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="{{ form.description.id_for_label }}">Description</label>
+        {{ form.description }}
+        {{ form.description.errors }}
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="{{ form.location.id_for_label }}">Location</label>
+        {{ form.location }}
+        {{ form.location.errors }}
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="{{ form.logo.id_for_label }}">Logo</label>
+        {{ form.logo }}
+        {{ form.logo.errors }}
+        <div class="form-hint">Recommended size: 200x200px or larger.</div>
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label for="{{ form.services.id_for_label }}">Services *</label>
+        {{ form.services }}
+        {{ form.services.errors }}
+        <div class="form-hint">Hold Ctrl to select multiple services.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;">
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'admin_panel:company_list' %}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

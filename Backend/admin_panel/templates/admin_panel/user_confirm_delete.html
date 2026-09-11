@@ -1,0 +1,15 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}Delete User{% endblock %}
+{% block content %}
+<form method="post">{% csrf_token %}
+  <div class="card">
+    <h3 style="font-size:15px;font-weight:700;color:#374151;margin-bottom:16px;">Confirm Deletion</h3>
+    <p>Are you sure you want to delete user <strong>{{ object.email }}</strong>?</p>
+    <p style="color:#ef4444;font-size:13px;margin-top:8px;">This action cannot be undone.</p>
+  </div>
+  <div style="display:flex;gap:12px;">
+    <button type="submit" class="btn btn-danger">Delete User</button>
+    <a href="{% url 'admin_panel:user_detail' object.pk %}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}LinkSafi Admin{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'admin_panel/css/style.css' %}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="admin-wrapper">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand">LinkSafi</span>
+        <span class="brand-dot">Admin</span>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="{% url 'admin_panel:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+              <svg class="icon"><path d="M3 12l2-2v8a1 1 0 001 1h2v-6h4v6h2a1 1 0 001-1V10l2 2v8a1 1 0 001 1h2v-6h4v6a1 1 0 001 1v3H4a1 1 0 01-1-1z" /></svg>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'admin_panel:user_list' %}" class="{% if request.resolver_match.url_name|slice:':4' == 'user' %}active{% endif %}">
+              <svg class="icon"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-5.8 2.6-5.8 5.8v1.8h11.6v-1.8c0-3.2-2.6-5.8-5.8-5.8z" /></svg>
+              <span>Users</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'admin_panel:company_list' %}" class="{% if request.resolver_match.url_name|slice:':7' == 'company' %}active{% endif %}">
+              <svg class="icon"><path d="M6 2h12a1 1 0 011 1v2H5V3a1 1 0 011-1h2zm12 5H6v12a1 1 0 001 1h12a1 1 0 001-1z" /></svg>
+              <span>Companies</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'admin_panel:request_list' %}" class="{% if request.resolver_match.url_name|slice:':7' == 'request' %}active{% endif %}">
+              <svg class="icon"><path d="M6 2h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1zm1 2v14h10V5H7z" /></svg>
+              <span>Service Requests</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <form action="{% url 'admin_panel:logout' %}" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="sidebar-logout">
+            <svg class="icon"><path d="M17 7l5 5-5 5v-3.5A6.5 6.5 0 0017 7.5V7zm0 0" /></svg>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="top-nav">
+        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        <div class="user-menu">
+          {% if request.user.is_authenticated %}
+          <span class="user-name">{{ request.user.name|default:request.user.email }}</span>
+          <span class="user-role">{{ request.user.get_role_display }}</span>
+          {% else %}
+          <span class="user-name">Guest</span>
+          {% endif %}
+        </div>
+      </header>
+
+      <main class="content-area">
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}
+              <div class="message message-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{% static 'admin_panel/js/admin.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

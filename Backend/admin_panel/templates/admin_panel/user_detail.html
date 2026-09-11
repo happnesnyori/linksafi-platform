@@ -1,0 +1,84 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}User: {{ object.email }}{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">User: {{ object.email }}</h3>
+    <div class="action-links">
+      <a href="{% url 'admin_panel:user_edit' object.pk %}" class="btn btn-secondary btn-sm">&#30440; Edit</a>
+      <a href="{% url 'admin_panel:user_delete' object.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this user?')">&#128465; Delete</a>
+      <a href="{% url 'admin_panel:user_list' %}" class="btn btn-secondary btn-sm">Back to List</a>
+    </div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Personal Information</h3>
+    <div class="detail-item">
+      <span class="label">Email</span>
+      <span class="value">{{ object.email }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Username</span>
+      <span class="value">{{ object.username }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Name</span>
+      <span class="value">{{ object.name|default:"-" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Phone</span>
+      <span class="value">{{ object.phone|default:"-" }}</span>
+    </div>
+  </div>
+  <div class="detail-section">
+    <h3>Permissions</h3>
+    <div class="detail-item">
+      <span class="label">Role</span>
+      <span class="value">
+        {% if object.role == 'organization' %}<span class="badge badge-blue">Organization</span>
+        {% else %}<span class="badge badge-green">Company</span>{% endif %}
+      </span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Active</span>
+      <span class="value">{{ object.is_active|yesno:"Yes,No" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Staff</span>
+      <span class="value">{{ object.is_staff|yesno:"Yes,No" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Superuser</span>
+      <span class="value">{{ object.is_superuser|yesno:"Yes,No" }}</span>
+    </div>
+  </div>
+  <div class="detail-section">
+    <h3>Related Data</h3>
+    {% if object.company %}
+    <div class="detail-item">
+      <span class="label">Company</span>
+      <span class="value">
+        <a href="{% url 'admin_panel:company_detail' object.company.pk %}">{{ object.company.name }}</a>
+      </span>
+    </div>
+    {% endif %}
+    <div class="detail-item">
+      <span class="label">Sent Requests</span>
+      <span class="value">{{ object.sent_requests.count }}</span>
+    </div>
+  </div>
+  <div class="detail-section">
+    <h3>Timestamps</h3>
+    <div class="detail-item">
+      <span class="label">Date Joined</span>
+      <span class="value meta">{{ object.date_joined|date:"M d, Y H:i" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Last Login</span>
+      <span class="value meta">{{ object.last_login|date:"M d, Y H:i"|default:"Never" }}</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

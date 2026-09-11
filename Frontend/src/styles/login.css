@@ -1,0 +1,496 @@
+/* ==========================================================
+   LOGIN PAGE — Harmonized with LinkSafi Brand & Theme
+   Soft warm blush background, deep royal navy & rose accents,
+   with the sleek pill-input layout from the reference design.
+========================================================== */
+
+/* ---------- Page Wrapper ---------- */
+
+.login-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background:
+    radial-gradient(circle at top left,
+      rgba(94, 234, 212, 0.12),
+      transparent 35%),
+    linear-gradient(135deg, #f8fafc 0%, #ecfdf9 100%);
+  box-sizing: border-box;
+}
+
+/* ---------- Login Card ---------- */
+
+.login-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 42px 38px 38px;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  border: 1px solid rgba(94, 234, 212, 0.25);
+
+  box-shadow:
+    0 25px 60px rgba(19, 78, 74, 0.12),
+    0 8px 25px rgba(94, 234, 212, 0.08);
+}
+
+/* ---------- Decorative Corner ---------- */
+
+.login-corner-wedge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+
+  background: #134E4A;
+
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  pointer-events: none;
+}
+
+/* ---------- Close Button ---------- */
+
+.login-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+
+  cursor: pointer;
+  z-index: 5;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.login-close-btn:hover {
+  background: rgba(94, 234, 212, 0.35);
+  transform: rotate(5deg);
+}
+
+/* ---------- Header ---------- */
+
+.login-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 30px;
+  z-index: 2;
+}
+
+/* ---------- Brand ---------- */
+
+.login-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--teal-950);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 18px;
+}
+
+.login-brand-text > span {
+  color: var(--amber-600);
+}
+
+.login-icon-wrap {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--teal-700);
+  color: var(--text-inverse);
+}
+
+.login-logo-icon {
+  color: var(--text-inverse);
+}
+
+/* ---------- Login Title ---------- */
+
+.login-title {
+  margin: 0;
+
+  color: #134E4A;
+
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 1px;
+
+  line-height: 1.2;
+}
+
+/* ---------- Error Alert ---------- */
+
+.login-error-alert {
+  margin-bottom: 20px;
+  padding: 12px 15px;
+
+  border-radius: 12px;
+
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+
+  color: #991b1b;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- Form ---------- */
+
+.login-form {
+  width: 100%;
+}
+
+/* ---------- Input Group ---------- */
+
+.login-input-group {
+  position: relative;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* ---------- Input Icon ---------- */
+
+.login-input-icon {
+  position: absolute;
+  left: 17px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #0F766E;
+
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ---------- Input ---------- */
+
+.login-pill-input {
+  width: 100%;
+  height: 54px;
+
+  box-sizing: border-box;
+
+  padding: 0 48px;
+
+  border: 2px solid #134E4A;
+  border-radius: 999px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: #134E4A;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.login-pill-input::placeholder {
+  color: #94a3b8;
+}
+
+.login-pill-input:hover {
+  border-color: #0F766E;
+}
+
+.login-pill-input:focus {
+  background: #ffffff;
+  border-color: #5EEAD4;
+
+  box-shadow:
+    0 0 0 4px rgba(94, 234, 212, 0.12);
+}
+
+/* ---------- Password Eye Button ---------- */
+
+.login-eye-btn {
+  position: absolute;
+
+  right: 14px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  background: transparent;
+  color: #0F766E;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.login-eye-btn:hover {
+  background: rgba(94, 234, 212, 0.12);
+  color: #134E4A;
+}
+
+/* ---------- Remember Me ---------- */
+
+.login-remember-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  margin: 5px 4px 22px;
+}
+
+/* ---------- Custom Checkbox ---------- */
+
+.login-custom-checkbox {
+  width: 17px;
+  height: 17px;
+
+  margin: 0;
+
+  accent-color: #0F766E;
+
+  cursor: pointer;
+}
+
+/* ---------- Remember Label ---------- */
+
+.login-remember-label {
+  color: #475569;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+/* ---------- Submit Button ---------- */
+
+.login-submit-btn {
+  width: 100%;
+
+  background: #134E4A;
+  color: #ffffff;
+
+  border: none;
+  border-radius: 999px;
+
+  padding: 15px 24px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  box-shadow:
+    0 6px 18px rgba(94, 234, 212, 0.12);
+
+  margin-top: 4px;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  background: #0F766E;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 22px rgba(94, 234, 212, 0.12);
+}
+
+.login-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ---------- Forgot Password ---------- */
+
+.login-forgot-link {
+  display: block;
+
+  margin-top: 18px;
+
+  text-align: center;
+
+  color: #0F766E;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  text-decoration: none;
+
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.login-forgot-link:hover {
+  color: #134E4A;
+  text-decoration: underline;
+}
+
+/* ---------- Register Row ---------- */
+
+.login-register-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  margin-top: 25px;
+  padding-top: 22px;
+
+  border-top: 1px solid #e2e8f0;
+
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+/* ---------- Register Link ---------- */
+
+.login-register-highlight {
+  color: #0F766E;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+.login-register-highlight:hover {
+  color: #134E4A;
+  text-decoration: underline;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .login-page-wrapper {
+    padding: 25px 15px;
+  }
+
+  .login-modal-card {
+    max-width: 100%;
+    padding: 36px 25px 30px;
+    border-radius: 20px;
+  }
+
+  .login-corner-wedge {
+    width: 95px;
+    height: 95px;
+  }
+
+  .login-close-btn {
+    top: 14px;
+    right: 14px;
+  }
+
+  .login-title {
+    font-size: 26px;
+  }
+
+  .login-brand-badge {
+    font-size: 20px;
+  }
+
+  .login-pill-input {
+    height: 52px;
+  }
+}
+
+/* ---------- Small Phones ---------- */
+
+@media (max-width: 380px) {
+
+  .login-page-wrapper {
+    padding: 18px 12px;
+  }
+
+  .login-modal-card {
+    padding: 32px 20px 26px;
+  }
+
+  .login-title {
+    font-size: 24px;
+  }
+
+  .login-brand-badge {
+    font-size: 19px;
+  }
+
+  .login-pill-input {
+    font-size: 13px;
+  }
+
+  .login-submit-btn {
+    padding: 14px 20px;
+  }
+}
+
+/* ---------- Reduced Motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .login-close-btn,
+  .login-pill-input,
+  .login-eye-btn,
+  .login-submit-btn,
+  .login-forgot-link,
+  .login-register-highlight {
+    transition: none;
+  }
+
+  .login-submit-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}

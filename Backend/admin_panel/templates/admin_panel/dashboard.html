@@ -1,0 +1,230 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card stat-primary">
+    <div class="stat-icon" aria-hidden="true">&#128172;</div>
+    <div class="stat-value">{{ total_users }}</div>
+    <div class="stat-label">Total Users</div>
+  </div>
+  <div class="stat-card stat-indigo">
+    <div class="stat-icon" aria-hidden="true">&#128178;</div>
+    <div class="stat-value">{{ total_organizations }}</div>
+    <div class="stat-label">Organizations</div>
+  </div>
+  <div class="stat-card stat-green">
+    <div class="stat-icon" aria-hidden="true">&#127979;</div>
+    <div class="stat-value">{{ total_companies }}</div>
+    <div class="stat-label">Companies</div>
+  </div>
+  <div class="stat-card stat-warning">
+    <div class="stat-icon" aria-hidden="true">&#128170;</div>
+    <div class="stat-value">{{ pending_requests }}</div>
+    <div class="stat-label">Pending Requests</div>
+  </div>
+  <div class="stat-card stat-success">
+    <div class="stat-icon" aria-hidden="true">&#9989;</div>
+    <div class="stat-value">{{ completed_requests }}</div>
+    <div class="stat-label">Completed Requests</div>
+  </div>
+  <div class="stat-card stat-red">
+    <div class="stat-icon" aria-hidden="true">&#10060;</div>
+    <div class="stat-value">{{ rejected_requests }}</div>
+    <div class="stat-label">Rejected Requests</div>
+  </div>
+</div>
+
+<div class="quick-actions">
+  <a href="{% url 'admin_panel:user_add' %}" class="quick-btn">
+    <span>&#43;</span> Add User
+  </a>
+  <a href="{% url 'admin_panel:company_add' %}" class="quick-btn">
+    <span>&#43;</span> Add Company
+  </a>
+  <a href="{% url 'admin_panel:request_add' %}" class="quick-btn">
+    <span>&#43;</span> Add Service Request
+  </a>
+  <a href="{% url 'admin_panel:user_list' %}" class="quick-btn">View Users</a>
+  <a href="{% url 'admin_panel:company_list' %}" class="quick-btn">View Companies</a>
+  <a href="{% url 'admin_panel:request_list' %}" class="quick-btn">View Requests</a>
+</div>
+
+<div class="chart-row">
+  <div class="chart-card">
+    <h3>Requests by Status</h3>
+    <canvas id="statusChart" height="220"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Users by Role</h3>
+    <canvas id="roleChart" height="220"></canvas>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="chart-card">
+    <h3>Requests by Service Type</h3>
+    <canvas id="serviceChart" height="220"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Summary</h3>
+    <div class="stats-grid" style="margin-bottom:0;">
+      <div class="stat-card stat-success">
+        <div class="stat-value">{{ accepted_requests }}</div>
+        <div class="stat-label">Accepted</div>
+      </div>
+      <div class="stat-card stat-indigo">
+        <div class="stat-value">{{ staff_users }}</div>
+        <div class="stat-label">Staff Users</div>
+      </div>
+      <div class="stat-card stat-teal">
+        <div class="stat-value">{{ inactive_users }}</div>
+        <div class="stat-label">Inactive Users</div>
+      </div>
+      <div class="stat-card stat-gray">
+        <div class="stat-value">{{ superusers }}</div>
+        <div class="stat-label">Superusers</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="activity-section">
+  <h3>Recent Activity</h3>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('tab-requests')">Service Requests</button>
+    <button class="tab" onclick="switchTab('tab-companies')">Companies</button>
+    <button class="tab" onclick="switchTab('tab-users')">Recent Users</button>
+  </div>
+  <div id="tab-requests" class="tab-content active">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Organization</th>
+          <th>Company</th>
+          <th>Service</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if recent_requests %}
+          {% for r in recent_requests %}
+          <tr>
+            <td>{{ r.id }}</td>
+            <td>{{ r.organization.email|default:"-" }}</td>
+            <td>{{ r.company.name|default:"-" }}</td>
+            <td>{{ r.get_service_display }}</td>
+            <td>
+              {% if r.status == 'pending' %}<span class="status-badge badge-pending">Pending</span>
+              {% elif r.status == 'accepted' %}<span class="status-badge badge-accepted">Accepted</span>
+              {% elif r.status == 'rejected' %}<span class="status-badge badge-rejected">Rejected</span>
+              {% else %}<span class="status-badge badge-completed">Completed</span>{% endif %}
+            </td>
+            <td class="meta">{{ r.created_at|date:"M d, Y H:i" }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6" class="empty-state">No requests yet.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div id="tab-companies" class="tab-content">
+    <table class="data-table">
+      <thead>
+        <tr><th>Company</th><th>Owner</th><th>Location</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% if recent_companies %}
+          {% for c in recent_companies %}
+          <tr>
+            <td>{{ c.name }}</td>
+            <td>{{ c.owner.email|default:"-" }}</td>
+            <td>{{ c.location|default:"-" }}</td>
+            <td class="meta">{{ c.created_at|date:"M d, Y H:i" }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="4" class="empty-state">No companies yet.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div id="tab-users" class="tab-content">
+    <table class="data-table">
+      <thead>
+        <tr><th>Email</th><th>Name</th><th>Role</th><th>Joined</th></tr>
+      </thead>
+      <tbody>
+        {% if recent_users %}
+          {% for u in recent_users %}
+          <tr>
+            <td>{{ u.email }}</td>
+            <td>{{ u.name|default:"-" }}</td>
+            <td>
+              {% if u.role == 'organization' %}<span class="badge badge-blue">Organization</span>
+              {% else %}<span class="badge badge-green">Company</span>{% endif %}
+            </td>
+            <td class="meta">{{ u.date_joined|date:"M d, Y H:i" }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="4" class="empty-state">No users yet.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+var statusChart = new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: JSON.parse('{{ status_chart_labels|escapejs }}'),
+    datasets: [{
+      data: JSON.parse('{{ status_chart_data|escapejs }}'),
+      backgroundColor: JSON.parse('{{ status_chart_colors|escapejs }}'),
+      borderWidth: 0,
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+});
+
+var roleChart = new Chart(document.getElementById('roleChart'), {
+  type: 'doughnut',
+  data: {
+    labels: JSON.parse('{{ role_chart_labels|escapejs }}'),
+    datasets: [{
+      data: JSON.parse('{{ role_chart_data|escapejs }}'),
+      backgroundColor: JSON.parse('{{ role_chart_colors|escapejs }}'),
+      borderWidth: 0,
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+});
+
+var serviceChart = new Chart(document.getElementById('serviceChart'), {
+  type: 'bar',
+  data: {
+    labels: JSON.parse('{{ service_chart_labels|escapejs }}'),
+    datasets: [{
+      label: 'Requests',
+      data: JSON.parse('{{ service_chart_data|escapejs }}'),
+      backgroundColor: JSON.parse('{{ service_chart_colors|escapejs }}'),
+      borderWidth: 0,
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }, plugins: { legend: { display: false } } }
+});
+</script>
+{% endblock %}

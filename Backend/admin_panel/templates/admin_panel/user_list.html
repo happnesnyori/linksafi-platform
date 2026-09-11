@@ -1,0 +1,83 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}Users{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div class="toolbar-title">All Users</div>
+  <div class="toolbar-actions">
+    <form method="get" style="display:flex; gap:8px; align-items:center;">
+      <div class="search-box">
+        <svg><path d="M15 14l5 5-5 5v-3.5A6.5 6.5 0 0017 7.5V7zm0 0" /></svg>
+        <input type="text" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Search email or name..." />
+      </div>
+      <select class="filter-select" name="role" onchange="this.form.submit()">
+        <option value="">All Roles</option>
+        <option value="organization" {% if request.GET.role == 'organization' %}selected{% endif %}>Organization</option>
+        <option value="company" {% if request.GET.role == 'company' %}selected{% endif %}>Company</option>
+      </select>
+      <select class="filter-select" name="is_active" onchange="this.form.submit()">
+        <option value="">All Status</option>
+        <option value="true" {% if request.GET.is_active == 'true' %}selected{% endif %}>Active</option>
+        <option value="false" {% if request.GET.is_active == 'false' %}selected{% endif %}>Inactive</option>
+      </select>
+      <a href="{% url 'admin_panel:user_add' %}" class="btn btn-primary btn-sm" style="margin-left:auto;">&#43; Add User</a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Staff</th>
+        <th>Joined</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.email }}</td>
+        <td>{{ user.name|default:"-" }}</td>
+        <td>
+          {% if user.role == 'organization' %}<span class="badge badge-blue">Organization</span>
+          {% else %}<span class="badge badge-green">Company</span>{% endif %}
+        </td>
+        <td>
+          {% if user.is_active %}<span class="status-badge badge-accepted">Active</span>
+          {% else %}<span class="status-badge badge-rejected">Inactive</span>{% endif %}
+        </td>
+        <td>{{ user.is_staff|yesno:"Yes,No" }}</td>
+        <td class="meta">{{ user.date_joined|date:"M d, Y" }}</td>
+        <td style="text-align:right;">
+          <div class="action-links">
+            <a href="{% url 'admin_panel:user_detail' user.pk %}" class="btn btn-secondary btn-sm" title="View">&#128064;</a>
+            <a href="{% url 'admin_panel:user_edit' user.pk %}" class="btn btn-secondary btn-sm" title="Edit">&#30440;</a>
+            <a href="{% url 'admin_panel:user_delete' user.pk %}" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Delete this user?')">&#128465;</a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="empty-state">No users found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?page=1">&laquo; First</a>
+    <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; Prev</a>
+  {% endif %}
+  <span class="current">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">Next &rsaquo;</a>
+    <a href="?page={{ paginator.num_pages }}">Last &raquo;</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

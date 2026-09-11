@@ -1,0 +1,80 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}Company: {{ object.name }}{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">Company: {{ object.name }}</h3>
+    <div class="action-links">
+      <a href="{% url 'admin_panel:company_edit' object.pk %}" class="btn btn-secondary btn-sm">&#30440; Edit</a>
+      <a href="{% url 'admin_panel:company_delete' object.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this company?')">&#128465; Delete</a>
+      <a href="{% url 'admin_panel:company_list' %}" class="btn btn-secondary btn-sm">Back to List</a>
+    </div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Basic Information</h3>
+    <div class="detail-item">
+      <span class="label">Name</span>
+      <span class="value">{{ object.name }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Owner</span>
+      <span class="value">
+        <a href="{% url 'admin_panel:user_detail' object.owner.pk %}">{{ object.owner.email }}</a>
+      </span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Location</span>
+      <span class="value">{{ object.location|default:"-" }}</span>
+    </div>
+    {% if object.logo %}
+    <div class="detail-item">
+      <span class="label">Logo</span>
+      <span class="value">
+        <img src="{{ object.logo.url }}" alt="Logo" style="max-height:60px;max-width:60px;border-radius:6px;" />
+      </span>
+    </div>
+    {% endif %}
+  </div>
+  <div class="detail-section">
+    <h3>Services & Description</h3>
+    <div class="detail-item">
+      <span class="label">Services</span>
+      <span class="value">
+        {% if object.services %}
+          {% for svc in object.services %}
+            {% if svc == 'cleaning' %}<span class="badge badge-green">Cleaning</span>
+            {% elif svc == 'decoration' %}<span class="badge badge-orange" style="background:#f59e0b;">Decoration</span>
+            {% elif svc == 'both' %}<span class="badge badge-purple">Both</span>
+            {% else %}<span class="badge badge-gray">{{ svc }}</span>{% endif %}
+          {% endfor %}
+        {% else %}<span class="meta">No services set</span>{% endif %}
+      </span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Description</span>
+      <span class="value">{{ object.description|default:"-"|linebreaks }}</span>
+    </div>
+  </div>
+  <div class="detail-section">
+    <h3>Statistics</h3>
+    <div class="detail-item">
+      <span class="label">Total Requests Received</span>
+      <span class="value">{{ object.received_requests.count }}</span>
+    </div>
+  </div>
+  <div class="detail-section">
+    <h3>Timestamps</h3>
+    <div class="detail-item">
+      <span class="label">Created</span>
+      <span class="value meta">{{ object.created_at|date:"M d, Y H:i" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Updated</span>
+      <span class="value meta">{{ object.updated_at|date:"M d, Y H:i" }}</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

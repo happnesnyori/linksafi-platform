@@ -1,0 +1,82 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}Request #{{ object.id }}{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:16px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0;">Service Request #{{ object.id }}</h3>
+    <div class="action-links">
+      <a href="{% url 'admin_panel:request_edit' object.pk %}" class="btn btn-secondary btn-sm">&#30440; Edit</a>
+      <a href="{% url 'admin_panel:request_delete' object.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this request?')">&#128465; Delete</a>
+      <a href="{% url 'admin_panel:request_list' %}" class="btn btn-secondary btn-sm">Back to List</a>
+    </div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Request Details</h3>
+    <div class="detail-item">
+      <span class="label">Organization</span>
+      <span class="value">
+        {% if object.organization %}
+          <a href="{% url 'admin_panel:user_detail' object.organization.pk %}">{{ object.organization.email }}</a>
+        {% else %}-{% endif %}
+      </span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Company</span>
+      <span class="value">
+        {% if object.company %}
+          <a href="{% url 'admin_panel:company_detail' object.company.pk %}">{{ object.company.name }}</a>
+        {% else %}-{% endif %}
+      </span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Service</span>
+      <span class="value">
+        {% if object.service == 'cleaning' %}<span class="badge badge-green">Cleaning</span>
+        {% elif object.service == 'decoration' %}<span class="badge badge-orange" style="background:#f59e0b;">Decoration</span>
+        {% elif object.service == 'both' %}<span class="badge badge-purple">Both</span>
+        {% else %}<span class="badge badge-gray">{{ object.service }}</span>{% endif %}
+      </span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Status</span>
+      <span class="value">
+        {% if object.status == 'pending' %}<span class="status-badge badge-pending">Pending</span>
+        {% elif object.status == 'accepted' %}<span class="status-badge badge-accepted">Accepted</span>
+        {% elif object.status == 'rejected' %}<span class="status-badge badge-rejected">Rejected</span>
+        {% else %}<span class="status-badge badge-completed">Completed</span>{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3>Description</h3>
+    <div class="detail-item">
+      <span class="value">{{ object.description|default:"No description provided."|linebreaks }}</span>
+    </div>
+  </div>
+
+  {% if object.response_note %}
+  <div class="detail-section">
+    <h3>Response Note</h3>
+    <div class="detail-item">
+      <span class="value">{{ object.response_note|linebreaks }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="detail-section">
+    <h3>Timestamps</h3>
+    <div class="detail-item">
+      <span class="label">Created</span>
+      <span class="value meta">{{ object.created_at|date:"M d, Y H:i" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Updated</span>
+      <span class="value meta">{{ object.updated_at|date:"M d, Y H:i" }}</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

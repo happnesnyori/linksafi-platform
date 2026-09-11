@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - LinkSafi Admin</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'admin_panel/css/style.css' %}" />
+  <style>
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    }
+    .auth-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .auth-brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-brand .brand-text {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .auth-brand .brand-sub {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-login:hover {
+      background: #1d4ed8;
+    }
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b2b;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-text">LinkSafi</div>
+        <div class="brand-sub">Administration Panel</div>
+      </div>
+      {% if form.errors %}
+        <div class="error-msg">Please correct the errors below.</div>
+      {% endif %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="error-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      <form method="post" action="{% url 'admin_panel:login' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="id_username">Email or Username</label>
+          <input type="text" name="username" id="id_username" required autofocus autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="id_password">Password</label>
+          <input type="password" name="password" id="id_password" required autocomplete="current-password" />
+        </div>
+        <input type="hidden" name="next" value="{{ next }}" />
+        <button type="submit" class="btn-login">Sign In</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

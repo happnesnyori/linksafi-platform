@@ -1,0 +1,83 @@
+{% extends "admin_panel/base.html" %}
+{% block page_title %}Companies{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div class="toolbar-title">All Companies</div>
+  <div class="toolbar-actions">
+    <form method="get" style="display:flex; gap:8px; align-items:center;">
+      <div class="search-box">
+        <svg><path d="M21 21l-4.35-4.35-1.34 1.34A7.5 7.5 0 1117.65 11h-1.4A5.5 5.5 0 1011 17.65l4.35 4.35z"/><circle cx="10" cy="10" r="4"/>
+        </svg>
+        <input type="text" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Search companies..." />
+      </div>
+      <a href="{% url 'admin_panel:company_add' %}" class="btn btn-primary btn-sm" style="margin-left:auto;">&#43; Add Company</a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Logo</th>
+        <th>Name</th>
+        <th>Owner</th>
+        <th>Location</th>
+        <th>Services</th>
+        <th>Created</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for company in companies %}
+      <tr>
+        <td>
+          {% if company.logo %}
+            <img src="{{ company.logo.url }}" alt="Logo" style="max-height:36px;max-width:36px;border-radius:6px;" />
+          {% else %}
+            <span class="meta" style="color:#d1d5db;">&#8682;</span>
+          {% endif %}
+        </td>
+        <td>{{ company.name }}</td>
+        <td>{{ company.owner.email|default:"-" }}</td>
+        <td>{{ company.location|default:"-" }}</td>
+        <td>
+          {% if company.services %}
+            {% for svc in company.services %}
+              {% if svc == 'cleaning' %}<span class="badge badge-green">Cleaning</span>
+              {% elif svc == 'decoration' %}<span class="badge badge-orange" style="background:#f59e0b;">Decoration</span>
+              {% elif svc == 'both' %}<span class="badge badge-purple">Both</span>
+              {% else %}<span class="badge badge-gray">{{ svc }}</span>{% endif %}
+            {% endfor %}
+          {% else %}<span class="meta">-</span>{% endif %}
+        </td>
+        <td class="meta">{{ company.created_at|date:"M d, Y" }}</td>
+        <td style="text-align:right;">
+          <div class="action-links">
+            <a href="{% url 'admin_panel:company_detail' company.pk %}" class="btn btn-secondary btn-sm" title="View">&#128064;</a>
+            <a href="{% url 'admin_panel:company_edit' company.pk %}" class="btn btn-secondary btn-sm" title="Edit">&#30440;</a>
+            <a href="{% url 'admin_panel:company_delete' company.pk %}" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Delete this company?')">&#128465;</a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="empty-state">No companies found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?page=1">&laquo; First</a>
+    <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; Prev</a>
+  {% endif %}
+  <span class="current">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">Next &rsaquo;</a>
+    <a href="?page={{ paginator.num_pages }}">Last &raquo;</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
