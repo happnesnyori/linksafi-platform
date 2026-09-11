@@ -32,7 +32,7 @@ export const getCompanies = async (filters = {}) => {
         if (filters.limit) params.append('limit', filters.limit);
 
         const queryString = params.toString();
-        const endpoint = queryString ? `/companies?${queryString}` : '/companies';
+        const endpoint = queryString ? `/companies/?${queryString}` : '/companies/';
         const response = await api(endpoint);
         const list = response?.companies || (Array.isArray(response) ? response : []);
         if (list.length > 0) {
@@ -46,7 +46,7 @@ export const getCompanies = async (filters = {}) => {
 
 export const getCompanyById = async (id) => {
     try {
-        const response = await api(`/companies/${id}`);
+        const response = await api(`/companies/${id}/`);
         if (response && response.id) return response;
     } catch {
         // Fallback to mock
@@ -57,7 +57,7 @@ export const getCompanyById = async (id) => {
 };
 
 export const updateCompany = async (id, data) => {
-    const response = await api(`/companies/${id}`, {
+    const response = await api(`/companies/${id}/`, {
         method: 'PUT',
         body: data,
     });
@@ -65,7 +65,7 @@ export const updateCompany = async (id, data) => {
 };
 
 export const updateServices = async (id, services) => {
-    const response = await api(`/companies/${id}/services`, {
+    const response = await api(`/companies/${id}/services/`, {
         method: 'PUT',
         body: { services },
     });

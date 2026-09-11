@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import RoleRoute from './RoleRoute';
 
@@ -127,6 +127,9 @@ const AppRoutes = () => {
             >
                 <Route index element={<AdminDashboard />} />
                 <Route path="companies" element={<AdminCompanies />} />
+                <Route path="companies/pending" element={<Navigate to="/admin/companies?status=pending" replace />} />
+                <Route path="companies/approved" element={<Navigate to="/admin/companies?status=approved" replace />} />
+                <Route path="companies/add" element={<Navigate to="/admin/companies?create=true" replace />} />
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="requests" element={<AdminRequests />} />
                 <Route path="reviews" element={<AdminReviews />} />

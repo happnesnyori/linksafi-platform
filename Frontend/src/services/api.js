@@ -55,7 +55,16 @@ const api = async (endpoint, options = {}) => {
             errorData = { message: response.statusText };
         }
 
-        const error = new Error(errorData.message || 'An error occurred');
+        const detail = Array.isArray(errorData.detail)
+            ? errorData.detail.join(' ')
+            : errorData.detail;
+        const fieldError = Object.values(errorData)
+            .find((value) => Array.isArray(value) && value.length > 0);
+        const errorMessage = errorData.message
+            || detail
+            || (Array.isArray(fieldError) ? fieldError.join(' ') : fieldError)
+            || 'An error occurred';
+        const error = new Error(errorMessage);
         error.status = response.status;
         error.data = errorData;
         throw error;

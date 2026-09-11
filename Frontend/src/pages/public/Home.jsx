@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Sparkles,
@@ -20,9 +20,11 @@ import {
 import PublicLayout from '../../layouts/PublicLayout';
 import imag1 from '../../assets/images/imag 1.jpg';
 import imag2 from '../../assets/images/imag 2.jpg';
-import { MOCK_COMPANIES } from '../../data/mockCompanies';
 import { TESTIMONIALS } from '../../data/mockTestimonials';
 import { formatService } from '../../utils/helpers';
+import { getCompanies } from '../../services/companyService';
+import Loading from '../../components/Loading';
+import EmptyState from '../../components/EmptyState';
 import '../../styles/home.css';
 
 export default function Home() {
@@ -31,9 +33,15 @@ export default function Home() {
     // Company Directory Filter State
     const [dirService, setDirService] = useState('all');
     const [dirSearch, setDirSearch] = useState('');
+    const [companies, setCompanies] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     // Saved / Heart toggle state (local only)
     const [savedIds, setSavedIds] = useState([]);
+
+    // FAQ Accordion State
+    const [openFaq, setOpenFaq] = useState(-1);
 
     const serviceFilters = [
         { id: 'all', label: 'All services', icon: Layers },
@@ -42,8 +50,22 @@ export default function Home() {
         { id: 'both', label: 'Cleaning + Decoration', icon: Layers },
     ];
 
-    // FAQ Accordion State
-    const [openFaq, setOpenFaq] = useState(0);
+    // Fetch companies from API
+    useEffect(() => {
+        const fetchCompanies = async () => {
+            try {
+                setLoading(true);
+                const data = await getCompanies({});
+                setCompanies(data || []);
+            } catch (err) {
+                setError('Failed to load companies');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCompanies();
+    }, []);
 
     const toggleSave = (id) => {
         setSavedIds(prev =>
@@ -51,10 +73,10 @@ export default function Home() {
         );
     };
 
-    const filteredCompanies = MOCK_COMPANIES.filter(company => {
+    const filteredCompanies = companies.filter(company => {
         const matchesService = dirService === 'all' ||
-            company.service === dirService ||
-            company.services?.includes(dirService);
+            company.services?.includes(dirService) ||
+            (company.service && company.service === dirService);
         const matchesSearch = !dirSearch.trim() ||
             company.name.toLowerCase().includes(dirSearch.toLowerCase()) ||
             company.location.toLowerCase().includes(dirSearch.toLowerCase());
@@ -286,7 +308,6 @@ export default function Home() {
                                 </div>
 
                             </div>
-
                         </div>
                     </div>
                 </section>
@@ -319,6 +340,7 @@ export default function Home() {
                                             key={service.id}
                                             className={`filter-pill ${dirService === service.id ? 'active' : ''}`}
                                             onClick={() => setDirService(service.id)}
+                                            disabled={loading}
                                         >
                                             <FilterIcon size={14} aria-hidden="true" />
                                             {service.label}
@@ -333,9 +355,25 @@ export default function Home() {
                                     placeholder="Search name or city..."
                                     value={dirSearch}
                                     onChange={(e) => setDirSearch(e.target.value)}
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
+
+                        {loading && (
+                            <Loading message="Loading verified companies..." />
+                        )}
+
+                        {error && (
+                            <div className="empty-results-box">
+                                <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+                                    {error}
+                                </p>
+                                <button className="btn-primary-pill" onClick={() => window.location.reload()}>
+                                    Retry
+                                </button>
+                            </div>
+                        )}
 
                         {/* Results Bar */}
                         <div className="directory-results-bar">
@@ -350,7 +388,7 @@ export default function Home() {
                         </div>
 
                         {/* Company Cards Grid */}
-                        {filteredCompanies.length === 0 ? (
+                        {!loading && !error && filteredCompanies.length === 0 ? (
                             <div className="empty-results-box">
                                 <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
                                     No companies match your current filters.
@@ -359,7 +397,7 @@ export default function Home() {
                                     Reset All Filters
                                 </button>
                             </div>
-                        ) : (
+                        ) : !loading && !error && filteredCompanies.length > 0 && (
                             <div className="directory-grid">
                                 {filteredCompanies.map(company => (
                                     <div

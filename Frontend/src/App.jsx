@@ -43,6 +43,7 @@ import Loading from './components/Loading';
 
 function App() {
     const { isAuthenticated, user, loading } = useAuth();
+    const isAdmin = user?.is_staff || user?.is_superuser || user?.role === 'admin';
 
     if (loading) {
         return (
@@ -66,8 +67,8 @@ function App() {
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/companies" element={<Companies />} />
                 <Route path="/companies/:id" element={<CompanyDetails />} />
-                <Route path="/login" element={isAuthenticated ? <Navigate to={user?.role === 'company' ? '/company/dashboard' : user?.role === 'admin' ? '/admin' : '/dashboard'} /> : <Login />} />
-                <Route path="/register" element={isAuthenticated ? <Navigate to={user?.role === 'company' ? '/company/dashboard' : user?.role === 'admin' ? '/admin' : '/dashboard'} /> : <Register />} />
+                <Route path="/login" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/dashboard' : '/dashboard'} /> : <Login />} />
+                <Route path="/register" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/dashboard' : '/dashboard'} /> : <Register />} />
 
                 {/* Organization Routes (Protected + Role-based) */}
                 <Route
@@ -196,6 +197,9 @@ function App() {
                 >
                     <Route index element={<AdminDashboard />} />
                     <Route path="companies" element={<AdminCompanies />} />
+                    <Route path="companies/pending" element={<Navigate to="/admin/companies?status=pending" replace />} />
+                    <Route path="companies/approved" element={<Navigate to="/admin/companies?status=approved" replace />} />
+                    <Route path="companies/add" element={<Navigate to="/admin/companies?create=true" replace />} />
                     <Route path="customers" element={<AdminCustomers />} />
                     <Route path="requests" element={<AdminRequests />} />
                     <Route path="reviews" element={<AdminReviews />} />

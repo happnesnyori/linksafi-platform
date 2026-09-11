@@ -6,12 +6,10 @@ import {
     Users,
     FileText,
     Sparkles,
-    Settings,
     LogOut,
     X,
     ChevronRight,
     ChevronDown,
-    History,
     Star,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -45,8 +43,6 @@ const mainNavItems = [
     },
     { path: '/admin/customers', label: 'Customers', icon: Users },
     { path: '/admin/requests', label: 'Service Requests', icon: FileText },
-    { path: '/admin/services', label: 'Services', icon: Sparkles },
-    { path: '/admin/activity', label: 'Activity Logs', icon: History },
     { path: '/admin/reviews', label: 'Reviews', icon: Star },
 ];
 

@@ -1,7 +1,7 @@
 import api from './api';
 
 export const createRequest = async (requestData) => {
-    const response = await api('/requests', {
+    const response = await api('/requests/', {
         method: 'POST',
         body: requestData,
     });
@@ -15,13 +15,13 @@ export const getRequests = async (filters = {}) => {
     if (filters.limit) params.append('limit', filters.limit);
 
     const queryString = params.toString();
-    const endpoint = queryString ? `/requests?${queryString}` : '/requests';
+    const endpoint = queryString ? `/requests/?${queryString}` : '/requests/';
     const response = await api(endpoint);
     return response;
 };
 
 export const getRequestById = async (id) => {
-    const response = await api(`/requests/${id}`);
+    const response = await api(`/requests/${id}/`);
     return response;
 };
 
@@ -32,27 +32,27 @@ export const getCompanyRequests = async (filters = {}) => {
     if (filters.limit) params.append('limit', filters.limit);
 
     const queryString = params.toString();
-    const endpoint = queryString ? `/company/requests?${queryString}` : '/company/requests';
+    const endpoint = queryString ? `/company/requests/?${queryString}` : '/company/requests/';
     const response = await api(endpoint);
     return response;
 };
 
 export const acceptRequest = async (id) => {
-    const response = await api(`/requests/${id}/accept`, {
+    const response = await api(`/requests/${id}/accept/`, {
         method: 'POST',
     });
     return response;
 };
 
 export const rejectRequest = async (id) => {
-    const response = await api(`/requests/${id}/reject`, {
+    const response = await api(`/requests/${id}/reject/`, {
         method: 'POST',
     });
     return response;
 };
 
 export const respondToRequest = async (id, responseData) => {
-    const response = await api(`/requests/${id}/respond`, {
+    const response = await api(`/requests/${id}/respond/`, {
         method: 'POST',
         body: responseData,
     });
@@ -60,7 +60,7 @@ export const respondToRequest = async (id, responseData) => {
 };
 
 export const getStats = async (type = 'organization') => {
-    const endpoint = type === 'company' ? '/company/stats' : '/stats';
+    const endpoint = type === 'company' ? '/company/stats/' : '/stats/';
     const response = await api(endpoint);
     return response;
 };

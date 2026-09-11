@@ -38,9 +38,13 @@ const VERIFICATION_OPTIONS = [
     { value: 'verified', label: 'Verified' },
 ];
 
-const getInitialStatus = () => {
+const getInitialFilters = () => {
     if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('status') || '';
+    const params = new URLSearchParams(window.location.search);
+    return {
+        status: params.get('status') || '',
+        create: params.get('create') === 'true',
+    };
 };
 
 const toList = (value) => {
@@ -273,10 +277,11 @@ const CompanyForm = ({
 };
 
 export default function AdminCompanies() {
+    const initialFilters = getInitialFilters();
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState(getInitialStatus);
+    const [statusFilter, setStatusFilter] = useState(initialFilters.status);
     const [activeFilter, setActiveFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -288,7 +293,7 @@ export default function AdminCompanies() {
     const [editLoading, setEditLoading] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
-    const [creatingCompany, setCreatingCompany] = useState(false);
+    const [creatingCompany, setCreatingCompany] = useState(initialFilters.create);
     const [createForm, setCreateForm] = useState(createEmptyForm());
     const [createLogo, setCreateLogo] = useState(null);
     const [createLoading, setCreateLoading] = useState(false);

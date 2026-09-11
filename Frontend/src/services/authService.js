@@ -1,7 +1,7 @@
 import api, { clearToken, setToken } from './api';
 
 export const login = async (credentials) => {
-    const response = await api('/auth/login', {
+    const response = await api('/auth/login/', {
         method: 'POST',
         body: credentials,
     });
@@ -9,7 +9,7 @@ export const login = async (credentials) => {
 };
 
 export const register = async (userData) => {
-    const response = await api('/auth/register', {
+    const response = await api('/auth/register/', {
         method: 'POST',
         body: userData,
     });
@@ -19,7 +19,7 @@ export const register = async (userData) => {
 
 export const logout = async () => {
     try {
-        const response = await api('/auth/logout', {
+        const response = await api('/auth/logout/', {
             method: 'POST',
         });
         clearToken();
@@ -31,6 +31,6 @@ export const logout = async () => {
 };
 
 export const getCurrentUser = async () => {
-    const response = await api('/auth/me');
+    const response = await api('/auth/me/');
     return response;
 };

@@ -17,18 +17,18 @@ const buildQuery = (params) => {
 export const adminService = {
     // Dashboard stats
     getDashboardStats: async () => {
-        const response = await api('/admin/dashboard');
+        const response = await api('/admin/dashboard/');
         return response;
     },
 
     // Dashboard charts + recent data
     getDashboardCharts: async () => {
-        const response = await api('/admin/dashboard/charts');
+        const response = await api('/admin/dashboard/charts/');
         return response;
     },
 
     getRecentActivity: async (limit = 10) => {
-        const response = await api(`/admin/activity?${buildQuery({ limit })}`);
+        const response = await api(`/admin/activity/?${buildQuery({ limit })}`);
         return response.results || response?.activities || response || [];
     },
 
@@ -41,13 +41,13 @@ export const adminService = {
         params.append('page', page);
         params.append('page_size', pageSize);
         const queryString = params.toString();
-        const endpoint = `/admin/companies${queryString ? `?${queryString}` : ''}`;
+        const endpoint = `/admin/companies/${queryString ? `?${queryString}` : ''}`;
         const response = await api(endpoint);
         return response;
     },
 
     getCompany: async (id) => {
-        const response = await api(`/admin/companies/${id}`);
+        const response = await api(`/admin/companies/${id}/`);
         return response;
     },
 
@@ -56,13 +56,13 @@ export const adminService = {
         params.append('page', 1);
         params.append('page_size', 100);
         const queryString = params.toString();
-        const endpoint = `/admin/companies${queryString ? `?${queryString}` : ''}`;
+        const endpoint = `/admin/companies/${queryString ? `?${queryString}` : ''}`;
         const response = await api(endpoint);
         return response.results || response || [];
     },
 
     createCompany: async (data) => {
-        const response = await api('/admin/companies', {
+        const response = await api('/admin/companies/', {
             method: 'POST',
             body: data,
         });
@@ -70,7 +70,7 @@ export const adminService = {
     },
 
     updateCompany: async (id, data) => {
-        const response = await api(`/admin/companies/${id}`, {
+        const response = await api(`/admin/companies/${id}/`, {
             method: 'PATCH',
             body: data,
         });
@@ -78,28 +78,28 @@ export const adminService = {
     },
 
     approveCompany: async (id) => {
-        const response = await api(`/admin/companies/${id}/approve`, {
+        const response = await api(`/admin/companies/${id}/approve/`, {
             method: 'POST',
         });
         return response;
     },
 
     rejectCompany: async (id) => {
-        const response = await api(`/admin/companies/${id}/reject`, {
+        const response = await api(`/admin/companies/${id}/reject/`, {
             method: 'POST',
         });
         return response;
     },
 
     suspendCompany: async (id) => {
-        const response = await api(`/admin/companies/${id}/suspend`, {
+        const response = await api(`/admin/companies/${id}/suspend/`, {
             method: 'POST',
         });
         return response;
     },
 
     reactivateCompany: async (id) => {
-        const response = await api(`/admin/companies/${id}/reactivate`, {
+        const response = await api(`/admin/companies/${id}/reactivate/`, {
             method: 'POST',
         });
         return response;
@@ -114,23 +114,23 @@ export const adminService = {
         params.append('page', page);
         params.append('page_size', pageSize);
         const queryString = params.toString();
-        const endpoint = `/admin/users${queryString ? `?${queryString}` : ''}`;
+        const endpoint = `/admin/users/${queryString ? `?${queryString}` : ''}`;
         const response = await api(endpoint);
         return response;
     },
 
     getCustomer: async (id) => {
-        const response = await api(`/admin/users/${id}`);
+        const response = await api(`/admin/users/${id}/`);
         return response;
     },
 
     getCustomerRequests: async (id) => {
-        const response = await api(`/admin/users/${id}/requests`);
+        const response = await api(`/admin/users/${id}/requests/`);
         return response;
     },
 
     updateCustomer: async (id, data) => {
-        const response = await api(`/admin/users/${id}`, {
+        const response = await api(`/admin/users/${id}/`, {
             method: 'PATCH',
             body: data,
         });
@@ -147,18 +147,18 @@ export const adminService = {
         params.append('page', page);
         params.append('page_size', pageSize);
         const queryString = params.toString();
-        const endpoint = `/admin/requests${queryString ? `?${queryString}` : ''}`;
+        const endpoint = `/admin/requests/${queryString ? `?${queryString}` : ''}`;
         const response = await api(endpoint);
         return response;
     },
 
     getRequest: async (id) => {
-        const response = await api(`/admin/requests/${id}`);
+        const response = await api(`/admin/requests/${id}/`);
         return response;
     },
 
     updateRequest: async (id, data) => {
-        const response = await api(`/admin/requests/${id}`, {
+        const response = await api(`/admin/requests/${id}/`, {
             method: 'PATCH',
             body: data,
         });
@@ -174,18 +174,18 @@ export const adminService = {
         params.append('page', page);
         params.append('page_size', pageSize);
         const queryString = params.toString();
-        const endpoint = `/admin/reviews${queryString ? `?${queryString}` : ''}`;
+        const endpoint = `/admin/reviews/${queryString ? `?${queryString}` : ''}`;
         const response = await api(endpoint);
         return response;
     },
 
     getReview: async (id) => {
-        const response = await api(`/admin/reviews/${id}`);
+        const response = await api(`/admin/reviews/${id}/`);
         return response;
     },
 
     updateReview: async (id, data) => {
-        const response = await api(`/admin/reviews/${id}`, {
+        const response = await api(`/admin/reviews/${id}/`, {
             method: 'PATCH',
             body: data,
         });
@@ -193,21 +193,21 @@ export const adminService = {
     },
 
     hideReview: async (id) => {
-        const response = await api(`/admin/reviews/${id}/hide`, {
+        const response = await api(`/admin/reviews/${id}/hide/`, {
             method: 'POST',
         });
         return response;
     },
 
     removeReview: async (id) => {
-        const response = await api(`/admin/reviews/${id}/remove`, {
+        const response = await api(`/admin/reviews/${id}/remove/`, {
             method: 'POST',
         });
         return response;
     },
 
     restoreReview: async (id) => {
-        const response = await api(`/admin/reviews/${id}/restore`, {
+        const response = await api(`/admin/reviews/${id}/restore/`, {
             method: 'POST',
         });
         return response;
@@ -216,29 +216,29 @@ export const adminService = {
     // Activity Logs
     getActivityLogs: async (filters = {}, page = 1, pageSize = 10) => {
         const params = { ...filters, page, page_size: pageSize };
-        const response = await api(`/admin/activity?${buildQuery(params)}`);
+        const response = await api(`/admin/activity/?${buildQuery(params)}`);
         return response;
     },
 
     // Services catalog
     getServices: async (filters = {}, page = 1, pageSize = 10) => {
         const params = { ...filters, page, page_size: pageSize };
-        const response = await api(`/admin/services?${buildQuery(params)}`);
+        const response = await api(`/admin/services/?${buildQuery(params)}`);
         return response;
     },
 
     getAllServices: async () => {
-        const response = await api('/admin/services?limit=100');
+        const response = await api('/admin/services/?limit=100');
         return response.results || response?.services || response || [];
     },
 
     getService: async (id) => {
-        const response = await api(`/admin/services/${id}`);
+        const response = await api(`/admin/services/${id}/`);
         return response;
     },
 
     createService: async (data) => {
-        const response = await api('/admin/services', {
+        const response = await api('/admin/services/', {
             method: 'POST',
             body: data,
         });
@@ -246,7 +246,7 @@ export const adminService = {
     },
 
     updateService: async (id, data) => {
-        const response = await api(`/admin/services/${id}`, {
+        const response = await api(`/admin/services/${id}/`, {
             method: 'PATCH',
             body: data,
         });
@@ -254,7 +254,7 @@ export const adminService = {
     },
 
     deleteService: async (id) => {
-        const response = await api(`/admin/services/${id}`, {
+        const response = await api(`/admin/services/${id}/`, {
             method: 'DELETE',
         });
         return response;
