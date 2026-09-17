@@ -55,6 +55,40 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
+  /* Company listing design tokens */
+  --mint-50: #E1F5EE;
+  --mint-100: #DDF0E7;
+  --mint-200: #BFE8DA;
+  --mint-700: #2C5E14;
+  --mint-800: #1F4A10;
+
+  --amber-icon: #E8A93A;
+  --amber-text: #8A5A00;
+
+  --green-bg: #E4F3DE;
+  --green-text: #2C5E14;
+
+  --gray-bg: #F1EFE8;
+  --gray-text: #5B6B65;
+
+  --company-grid-border: #E1E7E4;
+
+  /* Our Services section tokens */
+  --services-bg-top: #10241D;
+  --services-bg-bottom: #050C0A;
+  --services-title: #0F2A22;
+  --services-muted: #6C7A75;
+  --badge-teal-bg: #E1F5EE;
+  --badge-teal-text: #0F6E56;
+  --badge-amber-bg: #FBEFDA;
+  --badge-amber-text: #A5670A;
+  --badge-navy-bg: #E7EAF5;
+  --badge-navy-text: #2E3A73;
+  --arrow-btn-bg: #F1F3F2;
+  --arrow-btn-color: #0f172a;
+  --check-bg: #E1F5EE;
+  --check-color: #0F6E56;
+
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;

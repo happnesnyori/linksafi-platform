@@ -20,6 +20,9 @@ export default function RequestService() {
         preferredDate: '',
         location: '',
         budget: '',
+        guestName: '',
+        guestEmail: '',
+        guestPhone: '',
     });
 
     useEffect(() => {
@@ -56,8 +59,19 @@ export default function RequestService() {
                 throw new Error('Please fill in all required fields');
             }
 
-            await requestService.createRequest(companyId, formData);
-            navigate('/requests');
+            const payload = {
+                service: formData.serviceType,
+                description: formData.description,
+                requested_date: formData.preferredDate,
+                location: formData.location,
+                budget: formData.budget,
+                guest_name: formData.guestName,
+                guest_email: formData.guestEmail,
+                guest_phone: formData.guestPhone,
+            };
+
+            await requestService.createRequest(companyId, payload);
+            navigate('/login?requested=1');
         } catch (err) {
             setError(err.message || 'Failed to submit request');
         } finally {
@@ -205,6 +219,42 @@ export default function RequestService() {
                                         value={formData.budget}
                                         onChange={handleChange}
                                         placeholder="Max budget in SAR"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Your Name (Optional)</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        name="guestName"
+                                        value={formData.guestName}
+                                        onChange={handleChange}
+                                        placeholder="Name for follow-up"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Email (Optional)</label>
+                                    <input
+                                        type="email"
+                                        className="form-input"
+                                        name="guestEmail"
+                                        value={formData.guestEmail}
+                                        onChange={handleChange}
+                                        placeholder="you@example.com"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Phone (Optional)</label>
+                                    <input
+                                        type="tel"
+                                        className="form-input"
+                                        name="guestPhone"
+                                        value={formData.guestPhone}
+                                        onChange={handleChange}
+                                        placeholder="+255 ..."
                                     />
                                 </div>
 

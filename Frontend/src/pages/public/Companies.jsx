@@ -8,11 +8,12 @@ import {
 } from 'lucide-react';
 
 import PublicLayout from '../../layouts/PublicLayout';
-import CompanyCard from '../../components/CompanyCard';
 import Loading from '../../components/Loading';
 import EmptyState from '../../components/EmptyState';
 import Button from '../../components/Button';
 import { getCompanies } from '../../services/companyService';
+import CompanyBrowser from '../../components/CompanyBrowser';
+import '../../styles/companies.css';
 
 export default function Companies() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -47,7 +48,7 @@ export default function Companies() {
             if (searchTerm.trim()) filters.search = searchTerm.trim();
 
             const response = await getCompanies(filters);
-            setCompanies(response?.companies || response || []);
+            setCompanies(response || []);
         } catch (err) {
             setError(err.message || 'Failed to load companies');
             setCompanies([]);
@@ -68,6 +69,13 @@ export default function Companies() {
         setSearchTerm('');
         setSearchParams(new URLSearchParams());
     };
+
+    const serviceOptions = [
+        { id: 'all', label: 'All Services' },
+        { id: 'cleaning', label: 'Cleaning' },
+        { id: 'decoration', label: 'Decoration' },
+        { id: 'both', label: 'Both' },
+    ];
 
     return (
         <PublicLayout>
@@ -122,12 +130,7 @@ export default function Companies() {
                                         <Sparkles size={14} /> Service:
                                     </span>
                                     <div className="filter-pills">
-                                        {[
-                                            { id: 'all', label: 'All Services' },
-                                            { id: 'cleaning', label: '✨ Cleaning' },
-                                            { id: 'decoration', label: '🎨 Decoration' },
-                                            { id: 'both', label: '⚡ Both' },
-                                        ].map((s) => (
+                                        {serviceOptions.map((s) => (
                                             <button
                                                 key={s.id}
                                                 className={`filter-pill ${selectedService === s.id ? 'active' : ''}`}
@@ -164,33 +167,24 @@ export default function Companies() {
                         )}
                     </div>
 
-                    {loading ? (
-                        <Loading message="Fetching verified service companies..." />
-                    ) : error ? (
-                        <EmptyState
-                            title="Unable to load companies"
-                            message={error}
-                            action={<Button variant="primary" onClick={loadCompanies}>Try Again</Button>}
-                        />
-                    ) : companies.length === 0 ? (
-                        <div className="empty-results-box">
-                            <EmptyState
-                                title="No matching companies found"
-                                message="No companies match your current filters. Try selecting 'All Services' or broadening your search."
-                                action={
-                                    <button className="btn-navy-pill" onClick={resetFilters}>
-                                        Reset All Filters
-                                    </button>
-                                }
-                            />
-                        </div>
-                    ) : (
-                        <div className="companies-grid">
-                            {companies.map((company) => (
-                                <CompanyCard key={company.id} company={company} />
-                            ))}
-                        </div>
-                    )}
+                    <CompanyBrowser
+                        companies={companies}
+                        loading={loading}
+                        error={error}
+                        onRetry={loadCompanies}
+                        serviceFilter={selectedService}
+                        onServiceFilterChange={(value) => {
+                            setSelectedService(value);
+                            updateFilter(value, searchTerm);
+                        }}
+                        emptyTitle="No matching companies found"
+                        emptyMessage="No companies match your current filters. Try selecting 'All Services' or broadening your search."
+                        emptyAction={
+                            <button className="btn-navy-pill" onClick={resetFilters}>
+                                Reset All Filters
+                            </button>
+                        }
+                    />
                 </div>
             </div>
         </PublicLayout>

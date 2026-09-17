@@ -1,0 +1,95 @@
+/* ==========================================================
+   COMPANY BROWSER (grid + inline profile toggle)
+   ========================================================== */
+
+.company-browser {
+    width: 100%;
+}
+
+.browser-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.browser-card-wrapper {
+    display: flex;
+}
+
+/* Filters */
+.browser-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 32px;
+    align-items: flex-end;
+}
+
+.browser-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.browser-filter-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.browser-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.browser-filter-pill {
+    padding: 9px 16px;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--company-grid-border);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.browser-filter-pill:hover {
+    border-color: var(--teal-400);
+    color: var(--teal-700);
+}
+
+.browser-filter-pill.active {
+    background: var(--teal-700);
+    color: var(--text-inverse);
+    border-color: var(--teal-700);
+}
+
+.browser-error,
+.browser-empty {
+    margin-top: 8px;
+}
+
+/* Responsive grid */
+@media (max-width: 1024px) {
+    .browser-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .browser-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .browser-filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+}

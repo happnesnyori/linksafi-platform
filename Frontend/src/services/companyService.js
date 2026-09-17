@@ -1,59 +1,31 @@
 import api from './api';
-import { MOCK_COMPANIES } from '../data/mockCompanies';
-
-const filterMockCompanies = (filters = {}) => {
-    let result = [...MOCK_COMPANIES];
-    if (filters.service && filters.service !== 'all') {
-        result = result.filter((c) => {
-            if (filters.service === 'both') {
-                return c.service === 'both' || (Array.isArray(c.services) && c.services.includes('both'));
-            }
-            return c.service === filters.service;
-        });
-    }
-    if (filters.search) {
-        const query = filters.search.toLowerCase();
-        result = result.filter(
-            (c) =>
-                c.name.toLowerCase().includes(query) ||
-                (c.description && c.description.toLowerCase().includes(query)) ||
-                (c.location && c.location.toLowerCase().includes(query))
-        );
-    }
-    return result;
-};
 
 export const getCompanies = async (filters = {}) => {
-    try {
-        const params = new URLSearchParams();
-        if (filters.service) params.append('service', filters.service);
-        if (filters.search) params.append('search', filters.search);
-        if (filters.page) params.append('page', filters.page);
-        if (filters.limit) params.append('limit', filters.limit);
+    const params = new URLSearchParams();
+    if (filters.service) params.append('service', filters.service);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit);
 
-        const queryString = params.toString();
-        const endpoint = queryString ? `/companies/?${queryString}` : '/companies/';
-        const response = await api(endpoint);
-        const list = response?.companies || (Array.isArray(response) ? response : []);
-        if (list.length > 0) {
-            return list;
-        }
-        return filterMockCompanies(filters);
-    } catch {
-        return filterMockCompanies(filters);
-    }
+    const queryString = params.toString();
+    const endpoint = queryString ? `/companies/?${queryString}` : '/companies/';
+    const response = await api(endpoint);
+    const list = response?.results || response?.companies || (Array.isArray(response) ? response : []);
+    return list;
 };
 
 export const getCompanyById = async (id) => {
-    try {
-        const response = await api(`/companies/${id}/`);
-        if (response && response.id) return response;
-    } catch {
-        // Fallback to mock
-    }
-    const found = MOCK_COMPANIES.find((c) => String(c.id) === String(id));
-    if (found) return found;
+    const response = await api(`/companies/${id}/`);
+    if (response && response.id) return response;
     throw new Error('Company not found');
+};
+
+export const createCompany = async (data) => {
+    const response = await api('/companies/', {
+        method: 'POST',
+        body: data,
+    });
+    return response;
 };
 
 export const updateCompany = async (id, data) => {
@@ -72,12 +44,21 @@ export const updateServices = async (id, services) => {
     return response;
 };
 
+export const deleteCompany = async (id) => {
+    const response = await api(`/companies/${id}/`, {
+        method: 'DELETE',
+    });
+    return response;
+};
+
 // Default export for easier importing
 export const companyService = {
     getCompanies,
     getCompanyById,
+    createCompany,
     updateCompany,
     updateServices,
+    deleteCompany,
 };
 
 export default companyService;

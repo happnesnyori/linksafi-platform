@@ -13,11 +13,11 @@ import Companies from './pages/public/Companies';
 import CompanyDetails from './pages/public/CompanyDetails';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
+import PublicRequestService from './pages/public/PublicRequestService';
 
 // Organization Pages
 import OrganizationDashboard from './pages/organization/Dashboard';
 import FindCompanies from './pages/organization/FindCompanies';
-import RequestService from './pages/organization/RequestService';
 import MyRequests from './pages/organization/MyRequests';
 import OrganizationRequestDetails from './pages/organization/RequestDetails';
 import OrganizationProfile from './pages/organization/Profile';
@@ -67,6 +67,7 @@ function App() {
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/companies" element={<Companies />} />
                 <Route path="/companies/:id" element={<CompanyDetails />} />
+                <Route path="/request-service/:companyId" element={<PublicRequestService />} />
                 <Route path="/login" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/dashboard' : '/dashboard'} /> : <Login />} />
                 <Route path="/register" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/dashboard' : '/dashboard'} /> : <Register />} />
 
@@ -87,16 +88,6 @@ function App() {
                         <ProtectedRoute>
                             <RoleRoute allowedRoles={['organization']}>
                                 <FindCompanies />
-                            </RoleRoute>
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/request-service/:companyId"
-                    element={
-                        <ProtectedRoute>
-                            <RoleRoute allowedRoles={['organization']}>
-                                <RequestService />
                             </RoleRoute>
                         </ProtectedRoute>
                     }

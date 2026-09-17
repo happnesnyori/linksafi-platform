@@ -1,21 +1,31 @@
 import { useState } from 'react';
-import { MapPin, ShieldCheck, Star, ArrowRight, Sparkles, Clock, Heart } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Star, ArrowRight, Heart, Sparkles } from 'lucide-react';
 import { formatService } from '../utils/helpers';
 import '../styles/companyCard.css';
 
-export default function CompanyCard({ company }) {
+export default function CompanyCard({ company, onQuoteRequest, onFullProfile }) {
     const [saved, setSaved] = useState(false);
 
     if (!company) return null;
 
     const rating = company.rating || 4.9;
-    const reviews = company.reviewsCount || 45;
     const isVerified = company.verified !== false;
-    const turnover = company.turnoverSpeed || "24-48h Dispatch";
+    const tag = company.tag || 'Service Provider';
+    const city = company.city || (company.location ? String(company.location).split('(')[0].split('&')[0].split(',')[0].trim() : '');
+    const thumbnail = company.thumbnailUrl || company.logo || '';
+
+    const handleProfileClick = (e) => {
+        e.preventDefault();
+        if (onFullProfile) onFullProfile(company);
+    };
+
+    const handleQuoteClick = (e) => {
+        e.preventDefault();
+        if (onQuoteRequest) onQuoteRequest(company);
+    };
 
     return (
-        <div className="company-card">
+        <div className="company-card company-card-collapsed">
             {/* Save / Heart Button */}
             <button
                 className="save-btn"
@@ -29,88 +39,58 @@ export default function CompanyCard({ company }) {
                 />
             </button>
 
-            {/* Top Card Banner */}
-            <div className="company-card-top-bar">
-                <div className="company-avatar-group">
-                    {company.logo ? (
-                        <img src={company.logo} alt={company.name} className="company-logo-img" />
-                    ) : (
-                        <div className="company-logo-placeholder">
-                            {company.name?.charAt(0).toUpperCase() || 'C'}
-                        </div>
-                    )}
-                    <div className="company-identity">
-                        <div className="company-title-row">
-                            <h3 className="company-name">{company.name}</h3>
-                            {isVerified && (
-                                <span className="verified-badge-pill" title="Verified & Insured Enterprise">
-                                    <ShieldCheck size={14} /> Verified
-                                </span>
-                            )}
-                        </div>
-                        {company.location && (
-                            <div className="company-location">
-                                <MapPin size={14} />
-                                <span>{company.location}</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="company-rating-box">
-                    <Star size={14} className="star-icon" />
-                    <span className="rating-score">{rating}</span>
-                    <span className="rating-count">({reviews})</span>
-                </div>
-            </div>
-
-            {/* Content & Tagline */}
-            <div className="company-card-content">
-                <p className="company-description">
-                    {company.tagline || company.description || "Professional facility partner for institutions and residential properties."}
-                </p>
-
-                {/* Services Provided */}
-                {company.services && (
-                    <div className="company-services">
-                        {(Array.isArray(company.services) ? company.services : [company.services])
-                            .map((service, i) => (
-                                <span key={i} className={`service-tag service-${service}`}>
-                                    <Sparkles size={12} />
-                                    {formatService(service)}
-                                </span>
-                            ))}
-                    </div>
-                )}
-
-                {/* Meta tags */}
-                <div className="company-meta-tags">
-                    <span className="turnover-tag">
-                        <Clock size={13} /> {turnover}
-                    </span>
-                </div>
-
-                {/* Specialties preview if available */}
-                {company.specialties && company.specialties.length > 0 && (
-                    <div className="company-specialties-preview">
-                        <span className="specialties-title">Key Capabilities:</span>
-                        <p className="specialties-snippet">
-                            {company.specialties.slice(0, 2).join(" • ")}
-                        </p>
+            {/* Thumbnail */}
+            <div className="collapsed-thumb">
+                {thumbnail ? (
+                    <img src={thumbnail} alt={company.name} />
+                ) : (
+                    <div className="collapsed-thumb-placeholder">
+                        {(company.name || 'C').charAt(0).toUpperCase()}
                     </div>
                 )}
             </div>
 
-            {/* Footer action buttons */}
-            <div className="company-card-footer">
-                <Link to={`/companies/${company.id}`} className="card-view-btn">
-                    <span>View Profile</span>
+            {/* Name + City */}
+            <div className="collapsed-head">
+                <h3 className="collapsed-name" title={company.name}>
+                    {company.name}
+                </h3>
+                {city && (
+                    <div className="collapsed-location">
+                        <span>{city}</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Rating number only */}
+            <div className="collapsed-rating">
+                <Star size={15} className="star-icon" />
+                <span className="rating-score">{rating}</span>
+            </div>
+
+            {/* Single primary service tag pill */}
+            <div className="collapsed-tag-row">
+                <span className="service-tag service-pill">
+                    <Sparkles size={12} /> {tag}
+                </span>
+            </div>
+
+            {/* Footer: single full-width "View profile" button */}
+            <div className="company-card-footer collapsed-footer">
+                <button
+                    type="button"
+                    className="card-view-btn collapsed-view-btn"
+                    onClick={handleProfileClick}
+                >
+                    <span>View profile</span>
                     <ArrowRight size={15} />
-                </Link>
-                <Link to={`/request-service/${company.id}`} className="card-request-btn">
-                    Request Quote
-                </Link>
+                </button>
             </div>
         </div>
     );
 }
+
+CompanyCard.defaultProps = {
+    onQuoteRequest: () => {},
+    onFullProfile: () => {},
+};

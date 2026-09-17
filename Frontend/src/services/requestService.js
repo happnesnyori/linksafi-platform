@@ -1,9 +1,29 @@
 import api from './api';
 
 export const createRequest = async (requestData) => {
+    // Support both {company_id} and {company} shapes
+    const payload = { ...requestData };
+    if (payload.companyId !== undefined) {
+        payload.company_id = payload.companyId;
+        delete payload.companyId;
+    }
     const response = await api('/requests/', {
         method: 'POST',
-        body: requestData,
+        body: payload,
+    });
+    return response;
+};
+
+// Public/Guest request - no authentication required
+export const createPublicRequest = async (companyId, requestData) => {
+    const payload = {
+        ...requestData,
+        company_id: Number(companyId),
+    };
+    // Use a public endpoint that doesn't require auth
+    const response = await api('/public/requests/', {
+        method: 'POST',
+        body: payload,
     });
     return response;
 };
@@ -60,7 +80,7 @@ export const respondToRequest = async (id, responseData) => {
 };
 
 export const getStats = async (type = 'organization') => {
-    const endpoint = type === 'company' ? '/company/stats/' : '/stats/';
+    const endpoint = '/stats/';
     const response = await api(endpoint);
     return response;
 };
@@ -68,6 +88,7 @@ export const getStats = async (type = 'organization') => {
 // Default export for easier importing
 export const requestService = {
     createRequest,
+    createPublicRequest,
     getRequests,
     getRequestById,
     getCompanyRequests,

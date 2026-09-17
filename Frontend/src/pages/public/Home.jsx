@@ -1,92 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Sparkles,
     ArrowRight,
     ShieldCheck,
     Search,
-    Star,
-    MapPin,
-    Clock,
-    Heart,
     Plus,
     Award,
     CalendarCheck,
     Leaf,
-    Paintbrush,
-    Layers,
 } from 'lucide-react';
 
 import PublicLayout from '../../layouts/PublicLayout';
 import imag1 from '../../assets/images/imag 1.jpg';
 import imag2 from '../../assets/images/imag 2.jpg';
 import { TESTIMONIALS } from '../../data/mockTestimonials';
-import { formatService } from '../../utils/helpers';
-import { getCompanies } from '../../services/companyService';
-import Loading from '../../components/Loading';
-import EmptyState from '../../components/EmptyState';
+import OurServices from '../../components/OurServices';
 import '../../styles/home.css';
 
 export default function Home() {
     const navigate = useNavigate();
 
-    // Company Directory Filter State
-    const [dirService, setDirService] = useState('all');
-    const [dirSearch, setDirSearch] = useState('');
-    const [companies, setCompanies] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    // Saved / Heart toggle state (local only)
-    const [savedIds, setSavedIds] = useState([]);
-
     // FAQ Accordion State
     const [openFaq, setOpenFaq] = useState(-1);
-
-    const serviceFilters = [
-        { id: 'all', label: 'All services', icon: Layers },
-        { id: 'cleaning', label: 'Cleaning', icon: Sparkles },
-        { id: 'decoration', label: 'Decoration', icon: Paintbrush },
-        { id: 'both', label: 'Cleaning + Decoration', icon: Layers },
-    ];
-
-    // Fetch companies from API
-    useEffect(() => {
-        const fetchCompanies = async () => {
-            try {
-                setLoading(true);
-                const data = await getCompanies({});
-                setCompanies(data || []);
-            } catch (err) {
-                setError('Failed to load companies');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCompanies();
-    }, []);
-
-    const toggleSave = (id) => {
-        setSavedIds(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-        );
-    };
-
-    const filteredCompanies = companies.filter(company => {
-        const matchesService = dirService === 'all' ||
-            company.services?.includes(dirService) ||
-            (company.service && company.service === dirService);
-        const matchesSearch = !dirSearch.trim() ||
-            company.name.toLowerCase().includes(dirSearch.toLowerCase()) ||
-            company.location.toLowerCase().includes(dirSearch.toLowerCase());
-        return matchesService && matchesSearch;
-    });
-
-    const resetDirFilters = () => {
-        setDirService('all');
-        setDirSearch('');
-    };
 
     const faqList = [
         {
@@ -312,222 +248,10 @@ export default function Home() {
                     </div>
                 </section>
 
-
                 {/* ==========================================================
-                    3. COMPANY DIRECTORY (6 Companies + Filters)
+                    3. OUR SERVICES (3 category cards)
                 ========================================================== */}
-                <section className="directory-section">
-                    <div className="container">
-                        <div className="section-header">
-                            <span className="section-badge">Verified Commercal Partners</span>
-                            <h2 className="section-title">Find Vetted Cleaning & Decoration Companies</h2>
-                            <p className="section-subtitle">
-                                Browse verified companies offering professional cleaning, decoration or both for your
-                                property or event. Find trusted service providers ready to meet your specific needs.
-
-                            </p>
-                        </div>
-
-                        {/* Filters */}
-                        <div className="directory-filters">
-                            <div className="filter-group">
-                                <span className="filter-label"><Sparkles size={14} /> Service:</span>
-                                {serviceFilters.map((service) => {
-                                    const FilterIcon = service.icon;
-
-                                    return (
-                                        <button
-                                            key={service.id}
-                                            className={`filter-pill ${dirService === service.id ? 'active' : ''}`}
-                                            onClick={() => setDirService(service.id)}
-                                            disabled={loading}
-                                        >
-                                            <FilterIcon size={14} aria-hidden="true" />
-                                            {service.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div className="search-input-wrapper">
-                                <Search size={16} className="search-icon" />
-                                <input
-                                    type="text"
-                                    placeholder="Search name or city..."
-                                    value={dirSearch}
-                                    onChange={(e) => setDirSearch(e.target.value)}
-                                    disabled={loading}
-                                />
-                            </div>
-                        </div>
-
-                        {loading && (
-                            <Loading message="Loading verified companies..." />
-                        )}
-
-                        {error && (
-                            <div className="empty-results-box">
-                                <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
-                                    {error}
-                                </p>
-                                <button className="btn-primary-pill" onClick={() => window.location.reload()}>
-                                    Retry
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Results Bar */}
-                        <div className="directory-results-bar">
-                            <span className="results-count">
-                                Showing {filteredCompanies.length} verified company{filteredCompanies.length === 1 ? '' : 'ies'}
-                            </span>
-                            {(dirService !== 'all' || dirSearch) && (
-                                <button className="reset-filter-btn" onClick={resetDirFilters}>
-                                    Reset Filters
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Company Cards Grid */}
-                        {!loading && !error && filteredCompanies.length === 0 ? (
-                            <div className="empty-results-box">
-                                <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
-                                    No companies match your current filters.
-                                </p>
-                                <button className="btn-primary-pill" onClick={resetDirFilters}>
-                                    Reset All Filters
-                                </button>
-                            </div>
-                        ) : !loading && !error && filteredCompanies.length > 0 && (
-                            <div className="directory-grid">
-                                {filteredCompanies.map(company => (
-                                    <div
-                                        key={company.id}
-                                        className="company-card modern-company-card"
-                                        style={{ position: 'relative' }}
-                                    >
-                                        {/* Save / Heart Button */}
-                                        <button
-                                            onClick={() => toggleSave(company.id)}
-                                            style={{
-                                                position: 'absolute',
-                                                top: '12px',
-                                                right: '12px',
-                                                zIndex: 5,
-                                                background: 'rgba(255,255,255,0.9)',
-                                                border: '1px solid var(--border-light)',
-                                                borderRadius: '50%',
-                                                width: '36px',
-                                                height: '36px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                boxShadow: 'var(--shadow-sm)',
-                                                transition: 'all var(--transition-fast)'
-                                            }}
-                                            aria-label={savedIds.includes(company.id) ? 'Remove from saved' : 'Save company'}
-                                        >
-                                            <Heart
-                                                size={18}
-                                                fill={savedIds.includes(company.id) ? '#E11D48' : 'none'}
-                                                color={savedIds.includes(company.id) ? '#E11D48' : '#64748B'}
-                                            />
-                                        </button>
-
-                                        {/* Top Card Banner */}
-                                        <div className="company-card-top-bar">
-                                            <div className="company-avatar-group">
-                                                {company.logo ? (
-                                                    <img src={company.logo} alt={company.name} className="company-logo-img" />
-                                                ) : (
-                                                    <div className="company-logo-placeholder">
-                                                        {company.name?.charAt(0).toUpperCase() || 'C'}
-                                                    </div>
-                                                )}
-                                                <div className="company-identity">
-                                                    <div className="company-title-row">
-                                                        <h3 className="company-name">{company.name}</h3>
-                                                        {company.verified && (
-                                                            <span className="verified-badge-pill" title="Verified & Insured Enterprise">
-                                                                <ShieldCheck size={14} /> Verified
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {company.location && (
-                                                        <div className="company-location">
-                                                            <MapPin size={14} />
-                                                            <span>{company.location}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="company-rating-box">
-                                                <Star size={14} className="star-icon" />
-                                                <span className="rating-score">{company.rating || 4.9}</span>
-                                                <span className="rating-count">({company.reviewsCount || 45})</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Content & Tagline */}
-                                        <div className="company-card-content">
-                                            <p className="company-description">
-                                                {company.tagline || company.description || "Professional facility partner for institutions and residential properties."}
-                                            </p>
-
-                                            {/* Services Provided */}
-                                            {company.services && (
-                                                <div className="company-services">
-                                                    {(Array.isArray(company.services) ? company.services : [company.services])
-                                                        .map((service, i) => (
-                                                            <span key={i} className={`service-tag service-${service}`}>
-                                                                <Sparkles size={12} />
-                                                                {formatService(service)}
-                                                            </span>
-                                                        ))}
-                                                </div>
-                                            )}
-
-                                            {/* Meta tags */}
-                                            <div className="company-meta-tags">
-                                                <span className="turnover-tag">
-                                                    <Clock size={13} /> {company.turnoverSpeed || "24-48h Dispatch"}
-                                                </span>
-                                            </div>
-
-                                            {/* Specialties preview if available */}
-                                            {company.specialties && company.specialties.length > 0 && (
-                                                <div className="company-specialties-preview">
-                                                    <span className="specialties-title">Key Capabilities:</span>
-                                                    <p className="specialties-snippet">
-                                                        {company.specialties.slice(0, 2).join(" • ")}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Footer action buttons */}
-                                        <div className="company-card-footer">
-                                            <button
-                                                className="card-view-btn"
-                                                onClick={() => navigate(`/companies/${company.id}`)}
-                                            >
-                                                <span>View Profile</span>
-                                                <ArrowRight size={15} />
-                                            </button>
-                                            <button
-                                                className="card-request-btn"
-                                                onClick={() => navigate(`/request-service/${company.id}`)}
-                                            >
-                                                Request Quote
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </section>
+                <OurServices />
 
 
                 {/* ==========================================================

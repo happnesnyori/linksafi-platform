@@ -1387,6 +1387,34 @@
   min-width: 0;
 }
 
+.admin-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid #d7e7e4;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f7a6e;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.admin-home-link:hover {
+  background: #e8f5f2;
+  border-color: #0f7a6e;
+  color: #115e59;
+}
+
+.admin-home-link svg:last-child {
+  margin-left: 4px;
+  color: #9ab0ae;
+  flex-shrink: 0;
+}
+
 .admin-navbar-heading {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, User, Settings, LogOut, Menu } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Search, Bell, User, Settings, LogOut, Menu, Home, ExternalLink } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
@@ -67,6 +67,12 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
                 >
                     <Menu size={20} />
                 </button>
+
+                <Link to="/" className="admin-home-link" title="View Site" target="_blank">
+                    <Home size={18} />
+                    <span>View Site</span>
+                    <ExternalLink size={12} />
+                </Link>
 
                 <div className="admin-navbar-heading">
                     <span className="admin-navbar-kicker">LinkSafi / Admin</span>

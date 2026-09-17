@@ -55,15 +55,28 @@ const api = async (endpoint, options = {}) => {
             errorData = { message: response.statusText };
         }
 
-        const detail = Array.isArray(errorData.detail)
-            ? errorData.detail.join(' ')
-            : errorData.detail;
-        const fieldError = Object.values(errorData)
-            .find((value) => Array.isArray(value) && value.length > 0);
-        const errorMessage = errorData.message
-            || detail
-            || (Array.isArray(fieldError) ? fieldError.join(' ') : fieldError)
-            || 'An error occurred';
+        let errorMessage = 'An error occurred';
+
+        if (response.status === 404) {
+            errorMessage = 'Service request endpoint not found. Please check the backend URL configuration.';
+        } else if (response.status === 400) {
+            const detail = Array.isArray(errorData.detail)
+                ? errorData.detail.join(' ')
+                : errorData.detail;
+            const fieldError = Object.values(errorData)
+                .find((value) => Array.isArray(value) && value.length > 0);
+            errorMessage = errorData.message
+                || detail
+                || (Array.isArray(fieldError) ? fieldError.join(' ') : fieldError)
+                || 'Validation failed. Please check your input.';
+        } else if (response.status === 401) {
+            errorMessage = 'Authentication required. Please log in.';
+        } else if (response.status === 403) {
+            errorMessage = 'You do not have permission to perform this action.';
+        } else {
+            errorMessage = errorData.message || errorData.detail || response.statusText;
+        }
+
         const error = new Error(errorMessage);
         error.status = response.status;
         error.data = errorData;

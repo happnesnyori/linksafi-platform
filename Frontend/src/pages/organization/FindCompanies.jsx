@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OrganizationLayout from '../../layouts/OrganizationLayout';
-import Button from '../../components/Button';
-import CompanyCard from '../../components/CompanyCard';
 import Loading from '../../components/Loading';
 import EmptyState from '../../components/EmptyState';
+import CompanyBrowser from '../../components/CompanyBrowser';
 import { getCompanies } from '../../services/companyService';
 
 export default function FindCompanies() {
@@ -31,7 +30,18 @@ export default function FindCompanies() {
         fetchCompanies();
     }, [serviceFilter]);
 
-    if (loading) return <OrganizationLayout><Loading /></OrganizationLayout>;
+    const filters = [
+        {
+            key: 'service',
+            label: 'Service',
+            options: [
+                { value: 'all', label: 'All Services' },
+                { value: 'cleaning', label: 'Cleaning' },
+                { value: 'decoration', label: 'Decoration' },
+                { value: 'both', label: 'Both' },
+            ],
+        },
+    ];
 
     return (
         <OrganizationLayout>
@@ -41,57 +51,17 @@ export default function FindCompanies() {
                     <p className="page-subtitle">Browse and discover service companies</p>
                 </div>
 
-                {/* Filter */}
-                <div style={{ marginBottom: '40px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#111111', marginBottom: '12px' }}>
-                        Filter by Service
-                    </div>
-                    <div className="service-selector">
-                        {[
-                            { value: 'all', label: 'All Services' },
-                            { value: 'cleaning', label: 'Cleaning' },
-                            { value: 'decoration', label: 'Decoration' },
-                        ].map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                className={`service-option ${serviceFilter === option.value ? 'active' : ''}`}
-                                onClick={() => setServiceFilter(option.value)}
-                            >
-                                <div className="service-option-label">{option.label}</div>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Companies Grid */}
-                {error && (
-                    <div style={{
-                        background: '#fee2e2',
-                        border: '1px solid #fecaca',
-                        color: '#991b1b',
-                        padding: '12px 16px',
-                        borderRadius: '6px',
-                        marginBottom: '20px',
-                    }}>
-                        {error}
-                    </div>
-                )}
-
-                {companies.length > 0 ? (
-                    <div className="companies-grid">
-                        {companies.map((company) => (
-                            <div key={company.id} onClick={() => navigate(`/companies/${company.id}`)}>
-                                <CompanyCard company={company} />
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <EmptyState
-                        title="No companies found"
-                        message="Try adjusting your filters to find available companies"
-                    />
-                )}
+                <CompanyBrowser
+                    companies={companies}
+                    loading={loading}
+                    error={error}
+                    onRetry={() => setServiceFilter(serviceFilter)}
+                    serviceFilter={serviceFilter}
+                    onServiceFilterChange={setServiceFilter}
+                    filters={filters}
+                    emptyTitle="No companies found"
+                    emptyMessage="Try adjusting your filters to find available companies."
+                />
             </div>
         </OrganizationLayout>
     );

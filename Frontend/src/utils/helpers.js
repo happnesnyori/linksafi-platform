@@ -57,6 +57,58 @@ export const formatService = (serviceKey) => {
     return SERVICE_LABELS[serviceKey] || serviceKey;
 };
 
+// Derive a short city/area string from a company's full location.
+// e.g. "Dar es Salaam (UDSM, Ardhi, IFM zones)" -> "Dar es Salaam"
+export const getCompanyCity = (company) => {
+    if (company?.city) return company.city;
+    const location = company?.location;
+    if (!location) return '';
+    return String(location).split('(')[0].split('&')[0].split(',')[0].trim();
+};
+
+// Return the full detailed location (all zones/branches).
+export const getCompanyFullLocation = (company) => {
+    if (company?.fullLocation) return company.fullLocation;
+    return company?.location || '';
+};
+
+// Primary service tag/category as a single label.
+export const getCompanyTag = (company) => {
+    if (company?.tag) return company.tag;
+    const services = company?.services;
+    if (Array.isArray(services) && services.length) {
+        return services.includes('both') ? 'Cleaning & Decoration' : formatService(services[0]);
+    }
+    if (company?.service) {
+        return formatService(company.service);
+    }
+    return 'Service Provider';
+};
+
+// Bulleted capabilities list.
+export const getCompanyCapabilities = (company) => {
+    if (Array.isArray(company?.capabilities)) return company.capabilities;
+    if (Array.isArray(company?.specialties)) return company.specialties;
+    return [];
+};
+
+// Normalize any company shape (mock or API) into the listing data contract.
+export const normalizeCompany = (company) => {
+    if (!company) return null;
+    return {
+        ...company,
+        city: getCompanyCity(company),
+        fullLocation: getCompanyFullLocation(company),
+        tag: getCompanyTag(company),
+        capabilities: getCompanyCapabilities(company),
+        rating: company.rating ?? 4.9,
+        reviewCount: company.reviewsCount ?? company.reviewCount ?? 0,
+        verified: company.verified !== false,
+        turnaroundTime: company.turnoverSpeed || company.turnaroundTime || '24-48 hours',
+        thumbnailUrl: company.logo || company.thumbnailUrl || company.thumbnail,
+    };
+};
+
 export const formatDate = (dateString) => {
     if (!dateString) return '—';
     const date = new Date(dateString);

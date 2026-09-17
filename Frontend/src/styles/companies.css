@@ -1,0 +1,251 @@
+/* ==========================================================
+   SERVICES PAGE (Companies) STYLES
+   Centers the hero band, filter bar, results bar, and grid
+   ========================================================== */
+
+.companies-page-wrapper {
+  width: 100%;
+}
+
+/* Hero band — no background, centered content */
+.companies-hero-band {
+  padding: 64px 0 48px;
+  text-align: center;
+  background: transparent;
+}
+
+.companies-hero-band .container {
+  max-width: 1100px;
+}
+
+.companies-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--teal-50);
+  border: 1px solid var(--teal-200);
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teal-700);
+  margin-bottom: 24px;
+}
+
+.companies-title {
+  font-size: clamp(30px, 3.6vw, 44px);
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.companies-subtitle {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  max-width: 680px;
+  margin: 0 auto 40px;
+}
+
+/* Filter card — centered */
+.companies-filter-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.filter-search-box {
+  position: relative;
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.filter-search-box input {
+  width: 100%;
+  padding: 13px 20px 13px 48px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.filter-search-box input:focus {
+  border-color: var(--teal-500);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+}
+
+.filter-search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+}
+
+/* Service filter pills — centered row */
+.filter-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-row-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.filter-pill {
+  padding: 9px 18px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter-pill:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--teal-400);
+  color: var(--teal-700);
+}
+
+.filter-pill.active {
+  background: var(--teal-700);
+  color: var(--text-inverse);
+  border-color: var(--teal-700);
+}
+
+/* Content section — centered */
+.companies-content-container {
+  max-width: 1100px;
+  text-align: center;
+}
+
+.companies-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto 28px;
+  padding: 0 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.results-count {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reset-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.reset-filter-btn:hover {
+  border-color: var(--teal-400);
+  color: var(--teal-700);
+}
+
+/* Grid wrapper — center the grid */
+.browser-grid {
+  justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .companies-hero-band {
+    padding: 48px 0 36px;
+  }
+
+  .companies-filter-card {
+    padding: 20px 18px;
+    margin: 0 16px;
+  }
+
+  .filter-search-box {
+    max-width: 100%;
+  }
+
+  .companies-results-bar {
+    padding: 0 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .companies-title {
+    font-size: 26px;
+  }
+
+  .companies-subtitle {
+    font-size: 14px;
+  }
+
+  .filter-pill {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}

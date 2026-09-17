@@ -25,11 +25,18 @@ class ServiceRequest(models.Model):
         (STATUS_COMPLETED, "Completed"),
     )
 
+    # Nullable so anonymous (guest) quote requests can be submitted
     organization = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="sent_requests",
     )
+    guest_name = models.CharField(max_length=120, blank=True)
+    guest_email = models.EmailField(blank=True)
+    guest_phone = models.CharField(max_length=32, blank=True)
+
     company = models.ForeignKey(
         Company,
         on_delete=models.CASCADE,
@@ -53,4 +60,4 @@ class ServiceRequest(models.Model):
         ordering = ("-created_at",)
 
     def __str__(self):
-        return f"Request #{self.id} — {self.service} ({self.status})"
+        return f"Request #{self.id} - {self.service} ({self.status})"

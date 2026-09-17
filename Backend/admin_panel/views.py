@@ -203,6 +203,11 @@ class CompanyCreateView(StaffRequiredMixin, CreateView):
     success_url = reverse_lazy("admin_panel:company_list")
     queryset = Company.objects.all()
 
+    def form_valid(self, form):
+        form.instance.status = Company.STATUS_APPROVED
+        form.instance.is_active = True
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_title"] = "Add New Company"

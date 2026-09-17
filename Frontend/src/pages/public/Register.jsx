@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import PublicLayout from '../../layouts/PublicLayout';
 import Button from '../../components/Button';
 import { register } from '../../services/authService';
+import { createCompany } from '../../services/companyService';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/register.css';
 
@@ -125,7 +126,7 @@ export default function Register() {
                 email: formData.email,
                 password: formData.password,
                 role: accountType,
-                [accountType === 'organization' ? 'organizationName' : 'companyName']: formData.name,
+                name: formData.name,
                 phone: formData.phone,
                 location: formData.location,
             };
@@ -139,6 +140,24 @@ export default function Register() {
 
             await register(userData);
             await contextLogin({ email: formData.email, password: formData.password });
+
+            // If company account, create company profile
+            if (accountType === 'company') {
+                try {
+                    const companyData = {
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        location: formData.location,
+                        description: formData.description,
+                        services: formData.services.includes('both') ? ['both'] : formData.services,
+                    };
+                    await createCompany(companyData);
+                } catch (companyErr) {
+                    console.error('Company creation failed:', companyErr);
+                    throw new Error(`Account created but company profile failed: ${companyErr.message || 'Please create your company profile from the dashboard'}`);
+                }
+            }
 
             navigate(accountType === 'organization' ? '/dashboard' : '/company/dashboard');
         } catch (err) {

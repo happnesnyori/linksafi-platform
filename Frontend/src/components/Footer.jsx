@@ -1,182 +1,103 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
-    Sparkles,
-    Search,
-    MapPin,
-    Mail,
-    Clock,
-    Phone,
-    GraduationCap,
-    Building2,
-    ShieldCheck,
     Globe,
-    Camera,
-    Briefcase,
+    Mail,
+    Phone,
     MessageCircle,
+    MapPin,
+    Truck,
+    ShieldCheck,
+    Building2,
+    Sparkles,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
 import "../styles/footer.css";
 
 export default function Footer() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const navigate = useNavigate();
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/companies?search=${encodeURIComponent(searchQuery.trim())}`);
-        } else {
-            navigate("/companies");
-        }
-    };
-
     return (
         <footer className="footer">
-            {/* TOP LOCATOR BAR (Molly Maid style postal/campus finder) */}
-            <div className="footer-locator-band">
-                <div className="footer-locator-container">
-                    <div className="footer-locator-text">
-                        <span className="footer-locator-tag">Direct Facility Dispatch</span>
-                        <h3>Find vetted cleaning & decor partners for your institution</h3>
-                        <p>Search by university campus, hostel zone, or city across Tanzania.</p>
-                    </div>
-
-                    <form className="footer-locator-form" onSubmit={handleSearch}>
-                        <div className="footer-input-wrapper">
-                            <MapPin size={18} className="footer-input-icon" />
-                            <input
-                                type="text"
-                                placeholder="Enter campus or city (e.g. UDSM, Mwenge, Dodoma)..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                        <button type="submit" className="footer-search-btn">
-                            <Search size={16} />
-                            <span>Find Providers</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
+            <div className="footer-accent-bar" />
 
             <div className="footer-container">
-                {/* BRAND */}
+                {/* BRAND / ABOUT */}
                 <div className="footer-brand">
-                    <Link to="/" className="footer-logo">
-                        <div className="logo-icon-wrap footer-icon-wrap">
-                            <Sparkles size={16} />
-                        </div>
-                        Link<span>Safi</span>
+                    <Link to="/" className="footer-logo" aria-label="Link Safi Home">
+                        <span className="logo-icon">
+                            <Sparkles size={24} />
+                        </span>
+                        <span className="logo-text">Link</span><span className="logo-text-accent">Safi</span>
                     </Link>
 
                     <p className="footer-description">
-                        The institutional discovery and booking platform connecting universities,
-                        student halls, and apartment complexes with certified, insured cleaning
-                        and decoration service companies.
+                        Connecting clients with trusted cleaning & decoration companies in Tanzania.
                     </p>
 
-                    <div className="footer-trust-badges">
-                        <span className="footer-trust-badge">
-                            <ShieldCheck size={14} /> 100% Insured & Vetted
-                        </span>
-                        <span className="footer-trust-badge">
-                            <GraduationCap size={14} /> Higher-Ed Ready
-                        </span>
+                    <div className="footer-socials" role="list" aria-label="Social media links">
+                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="footer-social-link">
+                            <Globe size={18} />
+                        </a>
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social-link">
+                            <Mail size={18} />
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="footer-social-link">
+                            <Phone size={18} />
+                        </a>
                     </div>
+                </div>
 
-                    <div className="footer-socials">
-                        <button type="button" aria-label="Website">
-                            <Globe size={16} />
-                        </button>
-                        <button type="button" aria-label="Instagram">
-                            <Camera size={16} />
-                        </button>
-                        <button type="button" aria-label="LinkedIn">
-                            <Briefcase size={16} />
-                        </button>
-                        <button type="button" aria-label="WhatsApp">
+                {/* QUICK LINKS */}
+                <nav className="footer-column" aria-labelledby="quick-links-heading">
+                    <h3 id="quick-links-heading">Quick Links</h3>
+                    <ul className="footer-links">
+                        <li><Link to="/">Home</Link></li>
+                        <li><Link to="/companies">Find Companies</Link></li>
+                        <li><Link to="/services">Services</Link></li>
+                        <li><Link to="/how-it-works">How It Works</Link></li>
+                        <li><Link to="/contact">Contact Us</Link></li>
+                        <li><Link to="/faq">FAQ</Link></li>
+                    </ul>
+                </nav>
+
+                {/* COMPANIES */}
+                <nav className="footer-column" aria-labelledby="companies-heading">
+                    <h3 id="companies-heading">Companies</h3>
+                    <ul className="footer-links">
+                        <li><Link to="/companies?service=cleaning">Cleaning Companies</Link></li>
+                        <li><Link to="/companies?service=decoration">Decoration Companies</Link></li>
+                        <li><Link to="/companies?service=both">Cleaning & Decoration</Link></li>
+                        <li><Link to="/register">Register Your Company</Link></li>
+                        <li><Link to="/login">Company Login</Link></li>
+                        <li className="view-all"><Link to="/companies">View All Companies →</Link></li>
+                    </ul>
+                </nav>
+
+                {/* CONTACT INFO */}
+                <div className="footer-column footer-contact" aria-labelledby="contact-heading">
+                    <h3 id="contact-heading">Contact Us</h3>
+                    <address className="contact-info">
+                        <div className="contact-item">
+                            <MapPin size={16} />
+                            <span>Dar es Salaam, Tanzania</span>
+                        </div>
+                        <div className="contact-item">
+                            <Phone size={16} />
+                            <a href="tel:+255700000000">+255 700 000 000</a>
+                        </div>
+                        <div className="contact-item">
+                            <Mail size={16} />
+                            <a href="mailto:info@linksafi.com">info@linksafi.com</a>
+                        </div>
+                        <a href="https://wa.me/255700000000" target="_blank" rel="noopener noreferrer" className="contact-item whatsapp-link">
                             <MessageCircle size={16} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* FOR UNIVERSITIES */}
-                <div className="footer-column">
-                    <div className="footer-col-header">
-                        <GraduationCap size={18} className="footer-col-icon" />
-                        <h3>For Universities</h3>
-                    </div>
-                    <Link to="/companies?service=cleaning">
-                        Student Hall Turnover Cleans
-                    </Link>
-                    <Link to="/companies?service=cleaning">
-                        Lecture Theatre & Lab Hygiene
-                    </Link>
-                    <Link to="/companies?service=decoration">
-                        Graduation Ceremony Staging
-                    </Link>
-                    <Link to="/companies?service=both">
-                        Full Campus Facility Contracts
-                    </Link>
-                    <Link to="/how-it-works">Institutional Procurement Flow</Link>
-                </div>
-
-                {/* FOR APARTMENTS */}
-                <div className="footer-column">
-                    <div className="footer-col-header">
-                        <Building2 size={18} className="footer-col-icon" />
-                        <h3>For Apartments</h3>
-                    </div>
-                    <Link to="/companies?service=cleaning">
-                        Move-In / Move-Out Cleans
-                    </Link>
-                    <Link to="/companies?service=cleaning">
-                        Common Corridor & Stairwell Care
-                    </Link>
-                    <Link to="/companies?service=decoration">
-                        Lobby & Residential Staging
-                    </Link>
-                    <Link to="/companies?service=both">
-                        Hostel Maintenance Bundles
-                    </Link>
-                    <Link to="/companies?service=cleaning">Waste & Facade Sanitization</Link>
-                </div>
-
-                {/* CONTACT & LEGAL */}
-                <div className="footer-column">
-                    <div className="footer-col-header">
-                        <Phone size={18} className="footer-col-icon" />
-                        <h3>Contact & Support</h3>
-                    </div>
-                    <div className="footer-contact-block">
-                        <div className="footer-contact-item">
-                            <Phone size={14} />
-                            <span>+255 (0) 700 000 000</span>
-                        </div>
-                        <div className="footer-contact-item">
-                            <Mail size={14} />
-                            <span>institutions@linksafi.com</span>
-                        </div>
-                        <div className="footer-contact-item">
-                            <Clock size={14} />
-                            <span>Mon - Sat 7am - 8pm</span>
-                        </div>
-                    </div>
-                    <Link to="/register">Register as a Company</Link>
-                    <Link to="/login">Provider Portal Login</Link>
-                    <Link to="/how-it-works">Provider Standards & Vetting</Link>
+                            <span>Chat on WhatsApp</span>
+                        </a>
+                    </address>
                 </div>
             </div>
 
             {/* BOTTOM BAR */}
             <div className="footer-bottom">
                 <div className="footer-bottom-content">
-                    <p>© 2026 LinkSafi Ltd. All Rights Reserved. Empowering Universities & Residential Communities.</p>
-                    <div className="footer-bottom-links">
-                        <Link to="/how-it-works">Terms of Service</Link>
-                        <Link to="/how-it-works">Privacy Policy</Link>
-                        <Link to="/how-it-works">Hygiene Standards</Link>
-                    </div>
+                    <p className="copyright">© 2026 Link Safi. All rights reserved.</p>
                 </div>
             </div>
         </footer>

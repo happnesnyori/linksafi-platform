@@ -12,10 +12,10 @@ import Companies from '../pages/public/Companies';
 import CompanyDetails from '../pages/public/CompanyDetails';
 import Login from '../pages/public/Login';
 import Register from '../pages/public/Register';
+import PublicRequestService from '../pages/public/PublicRequestService';
 
 import OrganizationDashboard from '../pages/organization/Dashboard';
 import FindCompanies from '../pages/organization/FindCompanies';
-import RequestService from '../pages/organization/RequestService';
 import MyRequests from '../pages/organization/MyRequests';
 import OrganizationRequestDetails from '../pages/organization/RequestDetails';
 import OrganizationProfile from '../pages/organization/Profile';
@@ -39,6 +39,7 @@ const AppRoutes = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/companies" element={<Companies />} />
                 <Route path="/companies/:id" element={<CompanyDetails />} />
+                <Route path="/request-service/:companyId" element={<PublicRequestService />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
             </Route>
@@ -57,19 +58,6 @@ const AppRoutes = () => {
                 <Route path="find-companies" element={<FindCompanies />} />
                 <Route path="requests" element={<MyRequests />} />
                 <Route path="profile" element={<OrganizationProfile />} />
-            </Route>
-
-            <Route
-                path="/request-service/:companyId"
-                element={
-                    <ProtectedRoute>
-                        <RoleRoute allowedRoles={['organization']}>
-                            <OrganizationLayout />
-                        </RoleRoute>
-                    </ProtectedRoute>
-                }
-            >
-                <Route index element={<RequestService />} />
             </Route>
 
             <Route
