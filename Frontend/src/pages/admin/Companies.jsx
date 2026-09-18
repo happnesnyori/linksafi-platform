@@ -22,7 +22,7 @@ const ITEMS_PER_PAGE = 10;
 const SERVICE_OPTIONS = [
     { value: 'cleaning', label: 'Cleaning' },
     { value: 'decoration', label: 'Decoration' },
-    { value: 'both', label: 'Cleaning + Decoration' },
+    { value: 'both', label: 'Both' },
 ];
 
 const STATUS_OPTIONS = [
@@ -293,6 +293,8 @@ export default function AdminCompanies() {
     const [editLoading, setEditLoading] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null);
+    const [permanentDeleteLoading, setPermanentDeleteLoading] = useState(false);
     const [creatingCompany, setCreatingCompany] = useState(initialFilters.create);
     const [createForm, setCreateForm] = useState(createEmptyForm());
     const [createLogo, setCreateLogo] = useState(null);
@@ -463,6 +465,22 @@ export default function AdminCompanies() {
             addToast(getErrorMessage(error), 'error');
         } finally {
             setDeleteLoading(false);
+        }
+    };
+
+    const handlePermanentDelete = async () => {
+        if (!permanentDeleteTarget) return;
+        try {
+            setPermanentDeleteLoading(true);
+            await adminService.deleteCompany(permanentDeleteTarget.id);
+            addToast('Company permanently deleted', 'success');
+            setPermanentDeleteTarget(null);
+            setViewingCompany(null);
+            await loadCompanies();
+        } catch (error) {
+            addToast(getErrorMessage(error), 'error');
+        } finally {
+            setPermanentDeleteLoading(false);
         }
     };
 
@@ -641,6 +659,13 @@ export default function AdminCompanies() {
                             </div>
                         </div>
                         <div className="admin-modal-footer">
+                            <button
+                                className="btn btn-danger"
+                                style={{ marginRight: 'auto' }}
+                                onClick={() => setPermanentDeleteTarget(viewingCompany)}
+                            >
+                                <Trash2 size={16} /> Delete Permanently
+                            </button>
                             <button className="btn btn-secondary" onClick={() => setViewingCompany(null)}>Close</button>
                             <button className="btn btn-primary" onClick={() => { setViewingCompany(null); handleEdit(viewingCompany); }}>
                                 <Edit size={16} /> Edit Company
@@ -721,6 +746,57 @@ export default function AdminCompanies() {
                     </div>
                 </div>
             )}
+
+            {permanentDeleteTarget && (
+                <PermanentDeleteConfirm
+                    company={permanentDeleteTarget}
+                    loading={permanentDeleteLoading}
+                    onCancel={() => setPermanentDeleteTarget(null)}
+                    onConfirm={handlePermanentDelete}
+                />
+            )}
         </div>
     );
 }
+
+const PermanentDeleteConfirm = ({ company, loading, onCancel, onConfirm }) => {
+    const [confirmText, setConfirmText] = useState('');
+    const canConfirm = confirmText.trim() === company.name;
+
+    return (
+        <div className="admin-modal-overlay" onClick={onCancel}>
+            <div className="admin-modal" onClick={(event) => event.stopPropagation()}>
+                <div className="admin-modal-header">
+                    <h3>Delete Company Permanently</h3>
+                    <button className="admin-modal-close" onClick={onCancel} aria-label="Cancel deletion">
+                        <X size={18} />
+                    </button>
+                </div>
+                <div className="admin-modal-body">
+                    <p className="admin-modal-message">
+                        This <strong>permanently deletes</strong> <strong>{company.name}</strong> and all of its data —
+                        service requests, reviews, gallery photos, and selected services. This cannot be undone.
+                        The owner's login account is kept, but they will need to set up a new company profile.
+                    </p>
+                    <div className="admin-form-group" style={{ marginTop: '16px' }}>
+                        <label className="admin-form-label">
+                            Type <strong>{company.name}</strong> to confirm
+                        </label>
+                        <input
+                            className="admin-form-input"
+                            value={confirmText}
+                            onChange={(event) => setConfirmText(event.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                </div>
+                <div className="admin-modal-footer">
+                    <button className="btn btn-secondary" onClick={onCancel} disabled={loading}>Cancel</button>
+                    <button className="btn btn-danger" onClick={onConfirm} disabled={loading || !canConfirm}>
+                        {loading ? 'Deleting...' : 'Delete Permanently'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};

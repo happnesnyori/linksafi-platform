@@ -62,7 +62,7 @@ export default function Navbar() {
                     <div className="logo-icon-wrap">
                         <Sparkles size={18} className="logo-icon" />
                     </div>
-                    Link<span>Safi</span>
+                    Safi<span>Link</span>
                 </Link>
 
                 {/* Mobile Menu Button */}
@@ -143,7 +143,7 @@ export default function Navbar() {
                                 </Link>
                             ) : (
                                 <Link
-                                    to="/company/dashboard"
+                                    to="/company/overview"
                                     className="nav-dash-link"
                                     onClick={handleNavClick}
                                 >

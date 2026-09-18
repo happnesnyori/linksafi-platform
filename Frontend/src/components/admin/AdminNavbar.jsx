@@ -75,7 +75,7 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
                 </Link>
 
                 <div className="admin-navbar-heading">
-                    <span className="admin-navbar-kicker">LinkSafi / Admin</span>
+                    <span className="admin-navbar-kicker">SafiLink / Admin</span>
                     <strong>{pageTitle}</strong>
                 </div>
                 <form

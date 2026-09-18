@@ -5,16 +5,21 @@ from rest_framework.views import APIView
 
 from accounts.models import User
 from accounts.permissions import IsAdmin
-from companies.models import Company
+from companies.models import Company, Service
 from service_requests.models import ServiceRequest
 from reviews.models import Review
 
+from .models import AdminAuditLog, log_admin_action
 from .serializers import (
+    AdminAdminCreateSerializer,
+    AdminAdminSerializer,
+    AdminAuditLogSerializer,
     AdminCompanyCreateSerializer,
     AdminCompanySerializer,
     AdminDashboardStatsSerializer,
     AdminReviewSerializer,
     AdminServiceRequestSerializer,
+    AdminServiceSerializer,
     AdminUserDetailSerializer,
     AdminUserSerializer,
 )
@@ -37,6 +42,21 @@ class AdminDashboardStatsView(APIView):
         company_status_counts = companies.values("status").annotate(count=Count("id"))
         company_status_map = {item["status"]: item["count"] for item in company_status_counts}
 
+        both_companies = companies.filter(
+            Q(services__contains=[Company.SERVICE_BOTH])
+            | (Q(services__contains=[Company.SERVICE_CLEANING]) & Q(services__contains=[Company.SERVICE_DECORATION]))
+        ).count()
+        cleaning_companies = companies.filter(
+            services__contains=[Company.SERVICE_CLEANING]
+        ).exclude(services__contains=[Company.SERVICE_BOTH]).exclude(
+            services__contains=[Company.SERVICE_DECORATION]
+        ).count()
+        decoration_companies = companies.filter(
+            services__contains=[Company.SERVICE_DECORATION]
+        ).exclude(services__contains=[Company.SERVICE_BOTH]).exclude(
+            services__contains=[Company.SERVICE_CLEANING]
+        ).count()
+
         pending = status_map.get(ServiceRequest.STATUS_PENDING, 0)
         accepted = status_map.get(ServiceRequest.STATUS_ACCEPTED, 0)
         rejected = status_map.get(ServiceRequest.STATUS_REJECTED, 0)
@@ -56,6 +76,9 @@ class AdminDashboardStatsView(APIView):
             "accepted_requests": accepted,
             "rejected_requests": rejected,
             "completed_requests": completed,
+            "cleaning_companies": cleaning_companies,
+            "decoration_companies": decoration_companies,
+            "both_companies": both_companies,
         }
         serializer = AdminDashboardStatsSerializer(data=data)
         serializer.is_valid()
@@ -74,7 +97,7 @@ class AdminUserListView(generics.ListAPIView):
         if role == "admin":
             qs = qs.filter(Q(is_staff=True) | Q(is_superuser=True))
         elif role:
-            qs = qs.filter(role=role)
+            qs = qs.filter(role=role, is_staff=False, is_superuser=False)
         if is_active in ("true", "false"):
             qs = qs.filter(is_active=(is_active == "true"))
         if search:
@@ -121,11 +144,15 @@ class AdminCompanyListView(generics.ListCreateAPIView):
         return qs.order_by("-created_at")
 
 
-class AdminCompanyDetailView(generics.RetrieveUpdateAPIView):
-    """Admin: retrieve/update any company."""
+class AdminCompanyDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Admin: retrieve/update/permanently delete any company."""
     serializer_class = AdminCompanySerializer
     permission_classes = (IsAdmin,)
     queryset = Company.objects.select_related("owner").all()
+
+    def perform_destroy(self, instance):
+        log_admin_action(self.request.user, "company_deleted", instance)
+        instance.delete()
 
 
 class AdminServiceRequestListView(generics.ListCreateAPIView):
@@ -175,7 +202,14 @@ class AdminReviewListView(generics.ListAPIView):
         if company_id:
             qs = qs.filter(company_id=company_id)
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            if status_filter == "published":
+                qs = qs.filter(status__in=[Review.STATUS_PUBLISHED, "visible"])
+            elif status_filter == "pending":
+                qs = qs.filter(status__in=[Review.STATUS_PENDING, "hidden"])
+            elif status_filter == "rejected":
+                qs = qs.filter(status__in=[Review.STATUS_REJECTED, "removed"])
+            else:
+                qs = qs.filter(status=status_filter)
         if search:
             qs = qs.filter(
                 Q(comment__icontains=search)
@@ -239,3 +273,74 @@ class AdminUserRequestsView(APIView):
                 "service_requests": serializer.data,
             }
         )
+
+
+class AdminServiceListView(generics.ListCreateAPIView):
+    """Admin: full CRUD over the service catalog (list/create)."""
+    serializer_class = AdminServiceSerializer
+    permission_classes = (IsAdmin,)
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = Service.objects.all().order_by("category", "ordering", "name")
+        category = self.request.query_params.get("category")
+        if category:
+            qs = qs.filter(category=category)
+        return qs
+
+    def perform_create(self, serializer):
+        service = serializer.save()
+        log_admin_action(self.request.user, "service_created", service)
+
+
+class AdminServiceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Admin: retrieve/update/delete a single catalog service."""
+    serializer_class = AdminServiceSerializer
+    permission_classes = (IsAdmin,)
+    queryset = Service.objects.all()
+
+    def perform_destroy(self, instance):
+        log_admin_action(self.request.user, "service_deleted", instance)
+        instance.delete()
+
+
+class AdminAdminListView(generics.ListAPIView):
+    """Admin: list all admin (staff/superuser) accounts."""
+    serializer_class = AdminAdminSerializer
+    permission_classes = (IsAdmin,)
+    pagination_class = None
+
+    def get_queryset(self):
+        return User.objects.filter(Q(is_staff=True) | Q(is_superuser=True)).order_by("-date_joined")
+
+
+class AdminAdminCreateView(APIView):
+    """Admin: invite a new admin account. Returns a one-time temporary password."""
+    permission_classes = (IsAdmin,)
+
+    def post(self, request):
+        serializer = AdminAdminCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        log_admin_action(request.user, "admin_invited", user)
+        return Response(
+            {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "temporary_password": user.temp_password,
+            },
+            status=201,
+        )
+
+
+class AdminAuditLogListView(generics.ListAPIView):
+    serializer_class = AdminAuditLogSerializer
+    permission_classes = (IsAdmin,)
+
+    def get_queryset(self):
+        qs = AdminAuditLog.objects.select_related("actor").all()
+        target_type = self.request.query_params.get("target_type")
+        if target_type:
+            qs = qs.filter(target_type=target_type)
+        return qs

@@ -9,14 +9,14 @@ import {
 
 const SERVICE_COLORS = {
     cleaning: '#0d9488',
-    decoration: '#10b981',
+    decoration: '#d97706',
     both: '#2563eb',
 };
 
 const SERVICE_LABELS = {
     cleaning: 'Cleaning',
     decoration: 'Decoration',
-    both: 'Cleaning + Decoration',
+    both: 'Combined Services',
 };
 
 const EmptyChart = () => (

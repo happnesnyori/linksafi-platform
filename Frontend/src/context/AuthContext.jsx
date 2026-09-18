@@ -11,20 +11,10 @@ export const AuthProvider = ({ children }) => {
 
     const fetchCurrentUser = useCallback(async () => {
         try {
-            // Add a timeout to prevent hanging if no backend is available
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), 5000)
-            );
-
-            const data = await Promise.race([
-                getCurrentUser(),
-                timeoutPromise,
-            ]);
+            const data = await getCurrentUser();
             setUser(data);
             setError(null);
         } catch (err) {
-            // Silently fail - user is not authenticated yet
-            // This is expected when there's no backend or user hasn't logged in
             setUser(null);
             setError(null);
         } finally {
@@ -37,7 +27,6 @@ export const AuthProvider = ({ children }) => {
     }, [fetchCurrentUser]);
 
     const login = useCallback(async (credentials) => {
-        setLoading(true);
         setError(null);
         try {
             const data = await authLogin(credentials);
@@ -47,31 +36,26 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             setError(err);
             throw err;
-        } finally {
-            setLoading(false);
         }
     }, []);
 
     const logout = useCallback(async () => {
-        setLoading(true);
         try {
             await authLogout();
         } catch (err) {
             setError(err);
         } finally {
             setUser(null);
-            setLoading(false);
         }
     }, []);
 
+    const role = (user?.is_staff || user?.is_superuser) ? 'admin' : (user?.role || null);
     const value = {
         user,
         loading,
         error,
         isAuthenticated: !!user,
-        role: user?.is_staff || user?.is_superuser
-            ? 'admin'
-            : user?.role || null,
+        role,
         login,
         logout,
         refreshUser: fetchCurrentUser,
@@ -82,8 +66,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (!context) throw new Error('useAuth must be used within an AuthProvider');
     return context;
 };

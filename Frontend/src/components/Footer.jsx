@@ -20,11 +20,11 @@ export default function Footer() {
             <div className="footer-container">
                 {/* BRAND / ABOUT */}
                 <div className="footer-brand">
-                    <Link to="/" className="footer-logo" aria-label="Link Safi Home">
+                    <Link to="/" className="footer-logo" aria-label="SafiLink Home">
                         <span className="logo-icon">
                             <Sparkles size={24} />
                         </span>
-                        <span className="logo-text">Link</span><span className="logo-text-accent">Safi</span>
+                        <span className="logo-text">Safi</span><span className="logo-text-accent">Link</span>
                     </Link>
 
                     <p className="footer-description">
@@ -97,7 +97,7 @@ export default function Footer() {
             {/* BOTTOM BAR */}
             <div className="footer-bottom">
                 <div className="footer-bottom-content">
-                    <p className="copyright">© 2026 Link Safi. All rights reserved.</p>
+                    <p className="copyright">© 2026 SafiLink. All rights reserved.</p>
                 </div>
             </div>
         </footer>

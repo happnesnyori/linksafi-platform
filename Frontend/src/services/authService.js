@@ -4,6 +4,7 @@ export const login = async (credentials) => {
     const response = await api('/auth/login/', {
         method: 'POST',
         body: credentials,
+        skipAuth: true,
     });
     return response;
 };
@@ -12,6 +13,7 @@ export const register = async (userData) => {
     const response = await api('/auth/register/', {
         method: 'POST',
         body: userData,
+        skipAuth: true,
     });
     setToken(response.access);
     return response;

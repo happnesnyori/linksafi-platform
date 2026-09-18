@@ -1,12 +1,10 @@
 import api from './api';
 
-export const createRequest = async (requestData) => {
-    // Support both {company_id} and {company} shapes
-    const payload = { ...requestData };
-    if (payload.companyId !== undefined) {
-        payload.company_id = payload.companyId;
-        delete payload.companyId;
-    }
+export const createRequest = async (companyId, requestData) => {
+    const payload = {
+        ...requestData,
+        company_id: Number(companyId),
+    };
     const response = await api('/requests/', {
         method: 'POST',
         body: payload,
@@ -14,13 +12,11 @@ export const createRequest = async (requestData) => {
     return response;
 };
 
-// Public/Guest request - no authentication required
 export const createPublicRequest = async (companyId, requestData) => {
     const payload = {
         ...requestData,
         company_id: Number(companyId),
     };
-    // Use a public endpoint that doesn't require auth
     const response = await api('/public/requests/', {
         method: 'POST',
         body: payload,
@@ -32,11 +28,10 @@ export const getRequests = async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.status) params.append('status', filters.status);
     if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    if (filters.limit) params.append('page_size', filters.limit);
 
     const queryString = params.toString();
-    const endpoint = queryString ? `/requests/?${queryString}` : '/requests/';
-    const response = await api(endpoint);
+    const response = await api(queryString ? `/requests/?${queryString}` : '/requests/');
     return response;
 };
 
@@ -49,25 +44,20 @@ export const getCompanyRequests = async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.status) params.append('status', filters.status);
     if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    if (filters.limit) params.append('page_size', filters.limit);
 
     const queryString = params.toString();
-    const endpoint = queryString ? `/company/requests/?${queryString}` : '/company/requests/';
-    const response = await api(endpoint);
+    const response = await api(queryString ? `/company/requests/?${queryString}` : '/company/requests/');
     return response;
 };
 
 export const acceptRequest = async (id) => {
-    const response = await api(`/requests/${id}/accept/`, {
-        method: 'POST',
-    });
+    const response = await api(`/requests/${id}/accept/`, { method: 'POST' });
     return response;
 };
 
 export const rejectRequest = async (id) => {
-    const response = await api(`/requests/${id}/reject/`, {
-        method: 'POST',
-    });
+    const response = await api(`/requests/${id}/reject/`, { method: 'POST' });
     return response;
 };
 
@@ -79,13 +69,11 @@ export const respondToRequest = async (id, responseData) => {
     return response;
 };
 
-export const getStats = async (type = 'organization') => {
-    const endpoint = '/stats/';
-    const response = await api(endpoint);
+export const getStats = async () => {
+    const response = await api('/stats/');
     return response;
 };
 
-// Default export for easier importing
 export const requestService = {
     createRequest,
     createPublicRequest,

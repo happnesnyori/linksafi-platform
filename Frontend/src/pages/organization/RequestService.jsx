@@ -19,59 +19,46 @@ export default function RequestService() {
         description: '',
         preferredDate: '',
         location: '',
-        budget: '',
-        guestName: '',
-        guestEmail: '',
-        guestPhone: '',
     });
 
     useEffect(() => {
-        const fetchCompany = async () => {
-            try {
-                setLoading(true);
-                const data = await getCompanyById(companyId);
-                setCompany(data);
-            } catch (err) {
-                setError('Failed to load company details');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
+        let active = true;
+        setLoading(true);
+        getCompanyById(companyId)
+            .then((data) => {
+                if (active) setCompany(data);
+            })
+            .catch(() => {
+                if (active) setError('Failed to load company details');
+            })
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+        return () => {
+            active = false;
         };
-        fetchCompany();
     }, [companyId]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setFormData((current) => ({ ...current, [name]: value }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         setError('');
         setSubmitting(true);
-
         try {
             if (!formData.serviceType || !formData.description || !formData.preferredDate) {
                 throw new Error('Please fill in all required fields');
             }
-
-            const payload = {
+            await requestService.createRequest(companyId, {
                 service: formData.serviceType,
                 description: formData.description,
                 requested_date: formData.preferredDate,
                 location: formData.location,
-                budget: formData.budget,
-                guest_name: formData.guestName,
-                guest_email: formData.guestEmail,
-                guest_phone: formData.guestPhone,
-            };
-
-            await requestService.createRequest(companyId, payload);
-            navigate('/login?requested=1');
+            });
+            navigate('/requests');
         } catch (err) {
             setError(err.message || 'Failed to submit request');
         } finally {
@@ -84,191 +71,63 @@ export default function RequestService() {
     if (!company) {
         return (
             <OrganizationLayout>
-                <div className="page-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
-                    <h2 className="page-title">Company not found</h2>
-                    <Button variant="primary" onClick={() => navigate('/find-companies')}>
-                        Back to Companies
-                    </Button>
+                <div className="page-container profile-error">
+                    <h1 className="page-title">Company not found</h1>
+                    <Button variant="primary" onClick={() => navigate('/find-companies')}>Back to Companies</Button>
                 </div>
             </OrganizationLayout>
         );
     }
 
+    const serviceItems = Array.isArray(company.service_items) ? company.service_items : [];
+    const serviceCategories = Array.isArray(company.services) ? company.services : [];
+    const serviceOptions = serviceItems.length
+        ? [...new Set(serviceItems.map((service) => service.category || service))]
+        : serviceCategories;
+
     return (
         <OrganizationLayout>
             <div className="page-container">
-                <button
-                    onClick={() => navigate(-1)}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#2563eb',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        marginBottom: '20px',
-                    }}
-                >
-                    ← Back
-                </button>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '40px' }} className="responsive-grid">
-                    {/* Company Info */}
+                <button className="company-profile-back" type="button" onClick={() => navigate(-1)}>← Back</button>
+                <div className="request-page-grid">
                     <div>
                         <h1 className="page-title">{company.name}</h1>
                         <p className="page-subtitle">{company.description}</p>
-                        <div style={{ marginTop: '24px' }}>
-                            <div style={{ marginBottom: '16px' }}>
-                                <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: '600' }}>Location</div>
-                                <div style={{ fontSize: '14px', color: '#111111', marginTop: '4px' }}>{company.location}</div>
-                            </div>
-                            <div style={{ marginBottom: '16px' }}>
-                                <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: '600' }}>Email</div>
-                                <div style={{ fontSize: '14px', color: '#111111', marginTop: '4px' }}>{company.email}</div>
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: '600' }}>Phone</div>
-                                <div style={{ fontSize: '14px', color: '#111111', marginTop: '4px' }}>{company.phone}</div>
-                            </div>
+                        <div className="request-company-contact">
+                            {company.location && <span>{company.location}</span>}
+                            {company.email && <span>{company.email}</span>}
+                            {company.phone && <span>{company.phone}</span>}
                         </div>
                     </div>
-
-                    {/* Request Form */}
-                    <div>
-                        <div style={{
-                            background: '#ffffff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '10px',
-                            padding: '24px',
-                        }}>
-                            <h2 className="section-title">Request Service</h2>
-
-                            {error && (
-                                <div style={{
-                                    background: '#fee2e2',
-                                    border: '1px solid #fecaca',
-                                    color: '#991b1b',
-                                    padding: '12px 16px',
-                                    borderRadius: '6px',
-                                    marginBottom: '24px',
-                                    fontSize: '14px',
-                                }}>
-                                    {error}
-                                </div>
-                            )}
-
-                            <form onSubmit={handleSubmit} className="form">
-                                <div className="form-group">
-                                    <label className="form-label required">Service Type</label>
-                                    <select
-                                        className="form-select"
-                                        name="serviceType"
-                                        value={formData.serviceType}
-                                        onChange={handleChange}
-                                        required
-                                    >
-                                        <option value="">Select service</option>
-                                        <option value="cleaning">Cleaning</option>
-                                        <option value="decoration">Decoration</option>
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label required">Description</label>
-                                    <textarea
-                                        className="form-textarea"
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleChange}
-                                        placeholder="Describe your service needs in detail..."
-                                        style={{ minHeight: '100px' }}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label required">Preferred Date</label>
-                                    <input
-                                        type="date"
-                                        className="form-input"
-                                        name="preferredDate"
-                                        value={formData.preferredDate}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Location</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        name="location"
-                                        value={formData.location}
-                                        onChange={handleChange}
-                                        placeholder="Service location (optional)"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Budget (Optional)</label>
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        name="budget"
-                                        value={formData.budget}
-                                        onChange={handleChange}
-                                        placeholder="Max budget in SAR"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Your Name (Optional)</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        name="guestName"
-                                        value={formData.guestName}
-                                        onChange={handleChange}
-                                        placeholder="Name for follow-up"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Email (Optional)</label>
-                                    <input
-                                        type="email"
-                                        className="form-input"
-                                        name="guestEmail"
-                                        value={formData.guestEmail}
-                                        onChange={handleChange}
-                                        placeholder="you@example.com"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Phone (Optional)</label>
-                                    <input
-                                        type="tel"
-                                        className="form-input"
-                                        name="guestPhone"
-                                        value={formData.guestPhone}
-                                        onChange={handleChange}
-                                        placeholder="+255 ..."
-                                    />
-                                </div>
-
-                                <Button
-                                    variant="primary"
-                                    size="lg"
-                                    fullWidth
-                                    type="submit"
-                                    disabled={submitting}
-                                >
-                                    {submitting ? 'Submitting...' : 'Submit Request'}
-                                </Button>
-                            </form>
-                        </div>
+                    <div className="request-form-card">
+                        <h2 className="section-title">Request Service</h2>
+                        {error && <div className="form-alert form-alert-error">{error}</div>}
+                        <form onSubmit={handleSubmit} className="form">
+                            <div className="form-group">
+                                <label className="form-label required">Service</label>
+                                <select className="form-select" name="serviceType" value={formData.serviceType} onChange={handleChange} required>
+                                    <option value="">Select a service offered by this company</option>
+                                    {serviceOptions.map((service) => (
+                                        <option key={service} value={service}>{service}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label required">Description</label>
+                                <textarea className="form-textarea" name="description" value={formData.description} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label required">Preferred Date</label>
+                                <input className="form-input" type="date" name="preferredDate" value={formData.preferredDate} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Location</label>
+                                <input className="form-input" type="text" name="location" value={formData.location} onChange={handleChange} />
+                            </div>
+                            <Button variant="primary" size="lg" fullWidth type="submit" disabled={submitting}>
+                                {submitting ? 'Submitting...' : 'Submit Request'}
+                            </Button>
+                        </form>
                     </div>
                 </div>
             </div>

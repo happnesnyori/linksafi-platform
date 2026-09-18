@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { User, Lock, X, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/login.css';
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login: contextLogin } = useAuth();
 
     const [usernameOrEmail, setUsernameOrEmail] = useState('');
@@ -38,13 +39,19 @@ export default function Login() {
                 localStorage.removeItem('remembered_user');
             }
 
-            // Role redirect
-            if (response.user?.role === 'company') {
-                navigate('/company/dashboard');
-            } else if (response.user?.role === 'admin' || response.user?.is_staff || response.user?.is_superuser) {
-                navigate('/admin');
+            // Return to the page that redirected here, if any; otherwise fall back to the role's home.
+            // RoleRoute still enforces access if "from" belongs to a different role's area.
+            const from = location.state?.from
+                ? `${location.state.from.pathname}${location.state.from.search || ''}`
+                : null;
+
+            // Role redirect — check admin first, since admin users can have role='company'
+            if (response.user?.role === 'admin' || response.user?.is_staff || response.user?.is_superuser) {
+                navigate(from || '/admin');
+            } else if (response.user?.role === 'company') {
+                navigate(from || '/company/overview');
             } else {
-                navigate('/dashboard');
+                navigate(from || '/dashboard');
             }
         } catch (err) {
             setError(err.message || 'Login failed. Please check your credentials.');
@@ -75,7 +82,7 @@ export default function Login() {
                         <div className="login-icon-wrap">
                             <Sparkles size={18} className="login-logo-icon" />
                         </div>
-                        <span className="login-brand-text">Link<span>Safi</span></span>
+                        <span className="login-brand-text">Safi<span>Link</span></span>
                     </div>
                     <h1 className="login-title">LOGIN</h1>
                 </div>

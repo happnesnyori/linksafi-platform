@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Check, Eye, EyeOff, Layers, Paintbrush, Sparkles, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Eye, EyeOff, Sparkles, X } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import PublicLayout from '../../layouts/PublicLayout';
 import Button from '../../components/Button';
+import Loading from '../../components/Loading';
 import { register } from '../../services/authService';
-import { createCompany } from '../../services/companyService';
+import { createCompany, getServicesCatalog, updateMyServices } from '../../services/companyService';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/register.css';
 
@@ -31,26 +32,10 @@ const passwordRequirements = [
     },
 ];
 
-const serviceOptions = [
-    {
-        id: 'cleaning',
-        title: 'Cleaning Services',
-        description: 'Deep cleaning, sanitization, turnover cleans, and routine facility care.',
-        icon: Sparkles,
-    },
-    {
-        id: 'decoration',
-        title: 'Decoration Services',
-        description: 'Event styling, floral design, staging, and interior decoration.',
-        icon: Paintbrush,
-    },
-    {
-        id: 'both',
-        title: 'Cleaning + Decoration',
-        description: 'Combined packages for complete facility care and event transformation.',
-        icon: Layers,
-    },
-];
+const categoryLabels = {
+    cleaning: 'Cleaning',
+    decoration: 'Decoration',
+};
 
 export default function Register() {
     const navigate = useNavigate();
@@ -66,13 +51,40 @@ export default function Register() {
         phone: '',
         location: '',
         description: '',
-        services: [],
     });
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [catalogServices, setCatalogServices] = useState([]);
+    const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+    const [catalogLoading, setCatalogLoading] = useState(false);
+
+    useEffect(() => {
+        if (accountType !== 'company') {
+            setCatalogServices([]);
+            setSelectedServiceIds([]);
+            return;
+        }
+
+        let active = true;
+        setCatalogLoading(true);
+        getServicesCatalog()
+            .then((data) => {
+                if (active) setCatalogServices(Array.isArray(data) ? data : []);
+            })
+            .catch((err) => {
+                if (active) setError(err.message || 'Failed to load service catalog');
+            })
+            .finally(() => {
+                if (active) setCatalogLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [accountType]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -82,25 +94,12 @@ export default function Register() {
         }));
     };
 
-    const handleServiceToggle = (service) => {
-        setFormData((prev) => {
-            const isSelected = prev.services.includes(service);
-
-            if (service === 'both') {
-                return {
-                    ...prev,
-                    services: isSelected ? [] : ['both'],
-                };
-            }
-
-            const servicesWithoutBoth = prev.services.filter((item) => item !== 'both');
-            const servicesWithoutCurrent = servicesWithoutBoth.filter((item) => item !== service);
-
-            return {
-                ...prev,
-                services: isSelected ? servicesWithoutBoth : [...servicesWithoutCurrent, service],
-            };
-        });
+    const handleServiceToggle = (serviceId) => {
+        setSelectedServiceIds((current) => (
+            current.includes(serviceId)
+                ? current.filter((id) => id !== serviceId)
+                : [...current, serviceId]
+        ));
     };
 
     const handleSubmit = async (e) => {
@@ -132,10 +131,12 @@ export default function Register() {
             };
 
             if (accountType === 'organization') {
-                userData.organizationType = formData.organizationType;
+                userData.organization_type = formData.organizationType;
             } else {
+                if (selectedServiceIds.length === 0) {
+                    throw new Error('Select at least one service from the catalog');
+                }
                 userData.description = formData.description;
-                userData.services = formData.services;
             }
 
             await register(userData);
@@ -144,22 +145,28 @@ export default function Register() {
             // If company account, create company profile
             if (accountType === 'company') {
                 try {
+                    const selectedCatalogServices = catalogServices.filter((service) => selectedServiceIds.includes(service.id));
+                    const categories = [...new Set(selectedCatalogServices.map((service) => service.category))];
+                    const highLevelServices = categories.length === 2
+                        ? ['both']
+                        : categories;
                     const companyData = {
                         name: formData.name,
                         email: formData.email,
                         phone: formData.phone,
                         location: formData.location,
                         description: formData.description,
-                        services: formData.services.includes('both') ? ['both'] : formData.services,
+                        services: highLevelServices,
                     };
                     await createCompany(companyData);
+                    await updateMyServices(selectedServiceIds);
                 } catch (companyErr) {
                     console.error('Company creation failed:', companyErr);
                     throw new Error(`Account created but company profile failed: ${companyErr.message || 'Please create your company profile from the dashboard'}`);
                 }
             }
 
-            navigate(accountType === 'organization' ? '/dashboard' : '/company/dashboard');
+            navigate(accountType === 'organization' ? '/dashboard' : '/company/overview');
         } catch (err) {
             setError(err.message || 'Registration failed. Please try again.');
         } finally {
@@ -176,10 +183,10 @@ export default function Register() {
                             <span className="register-brand-icon">
                                 <Sparkles size={18} aria-hidden="true" />
                             </span>
-                            <span>Link<span>Safi</span></span>
+                            <span>Safi<span>Link</span></span>
                         </div>
                         <h1 className="register-title">Create Account</h1>
-                        <p className="register-subtitle">Join LinkSafi to get started</p>
+                        <p className="register-subtitle">Join SafiLink to get started</p>
                     </div>
 
                     <div className="register-account-selector" role="group" aria-label="Account type">
@@ -254,31 +261,47 @@ export default function Register() {
 
                             <div className="form-group">
                                 <label className="form-label required">Services Offered</label>
-                                <div className="register-services-grid" role="group" aria-label="Services offered">
-                                    {serviceOptions.map((service) => {
-                                        const Icon = service.icon;
-                                        const isSelected = formData.services.includes(service.id);
-
-                                        return (
-                                            <button
-                                                key={service.id}
-                                                type="button"
-                                                className={`register-service-card ${isSelected ? 'active' : ''}`}
-                                                onClick={() => handleServiceToggle(service.id)}
-                                                aria-pressed={isSelected}
-                                            >
-                                                <span className="register-service-icon">
-                                                    <Icon size={22} aria-hidden="true" />
-                                                </span>
-                                                <span className="register-service-title">{service.title}</span>
-                                                <span className="register-service-description">{service.description}</span>
-                                                <span className="register-service-status">
-                                                    {isSelected ? 'Selected' : 'Select'}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                {catalogLoading ? (
+                                    <Loading />
+                                ) : catalogServices.length === 0 ? (
+                                    <div className="register-error">No active services are available in the catalog.</div>
+                                ) : (
+                                    <div className="register-services-grid" role="group" aria-label="Services offered">
+                                        {Object.entries(Object.groupBy
+                                            ? Object.groupBy(catalogServices, (service) => service.category)
+                                            : catalogServices.reduce((groups, service) => {
+                                                const category = service.category || 'other';
+                                                groups[category] = groups[category] || [];
+                                                groups[category].push(service);
+                                                return groups;
+                                            }, {})).map(([category, services]) => (
+                                            <div key={category} className="register-service-group">
+                                                <div className="register-service-group-title">{categoryLabels[category] || category}</div>
+                                                {services.map((service) => {
+                                                    const isSelected = selectedServiceIds.includes(service.id);
+                                                    return (
+                                                        <button
+                                                            key={service.id}
+                                                            type="button"
+                                                            className={`register-service-card ${isSelected ? 'active' : ''}`}
+                                                            onClick={() => handleServiceToggle(service.id)}
+                                                            aria-pressed={isSelected}
+                                                        >
+                                                            <span className="register-service-icon">
+                                                                <Sparkles size={22} aria-hidden="true" />
+                                                            </span>
+                                                            <span className="register-service-title">{service.name}</span>
+                                                            <span className="register-service-description">{service.description}</span>
+                                                            <span className="register-service-status">
+                                                                {isSelected ? 'Selected' : 'Select'}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}

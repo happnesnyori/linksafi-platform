@@ -36,8 +36,8 @@ export default function RequestDetails() {
     const handleAccept = async () => {
         try {
             setResponding(true);
-            await requestService.acceptRequest(requestId);
-            setRequest((prev) => ({ ...prev, status: 'accepted' }));
+            const updated = await requestService.acceptRequest(requestId);
+            setRequest((current) => ({ ...current, ...updated }));
         } catch (err) {
             setError('Failed to accept request');
         } finally {
@@ -48,8 +48,8 @@ export default function RequestDetails() {
     const handleReject = async () => {
         try {
             setResponding(true);
-            await requestService.rejectRequest(requestId);
-            setRequest((prev) => ({ ...prev, status: 'rejected' }));
+            const updated = await requestService.rejectRequest(requestId);
+            setRequest((current) => ({ ...current, ...updated }));
         } catch (err) {
             setError('Failed to reject request');
         } finally {
@@ -57,18 +57,14 @@ export default function RequestDetails() {
         }
     };
 
-    const handleSubmitResponse = async (e) => {
-        e.preventDefault();
+    const handleSubmitResponse = async (event) => {
+        event.preventDefault();
         if (!response.trim()) return;
 
         try {
             setResponding(true);
-            await requestService.respondToRequest(requestId, response);
-            setRequest((prev) => ({
-                ...prev,
-                companyResponse: response,
-                companyResponseDate: new Date().toISOString(),
-            }));
+            const updated = await requestService.respondToRequest(requestId, { response_note: response });
+            setRequest((current) => ({ ...current, ...updated }));
             setResponse('');
             setResponseMode(false);
         } catch (err) {
@@ -85,9 +81,7 @@ export default function RequestDetails() {
             <CompanyLayout>
                 <div className="page-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
                     <h2 className="page-title">Request not found</h2>
-                    <Button variant="primary" onClick={() => navigate('/company/requests')}>
-                        Back to Requests
-                    </Button>
+                    <Button variant="primary" onClick={() => navigate('/company/requests')}>Back to Requests</Button>
                 </div>
             </CompanyLayout>
         );
@@ -104,7 +98,7 @@ export default function RequestDetails() {
                         color: '#2563eb',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        fontWeight: '500',
+                        fontWeight: 500,
                         marginBottom: '20px',
                     }}
                 >
@@ -112,7 +106,6 @@ export default function RequestDetails() {
                 </button>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }} className="responsive-grid">
-                    {/* Main Details */}
                     <div>
                         <div style={{ marginBottom: '40px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
@@ -122,16 +115,10 @@ export default function RequestDetails() {
                             <p className="page-subtitle">From {request.organization?.name}</p>
                         </div>
 
-                        {/* Organization Info */}
                         <div style={{ marginBottom: '40px' }}>
                             <h2 className="section-title">Organization</h2>
-                            <div style={{
-                                background: '#f9fafb',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '10px',
-                                padding: '20px',
-                            }}>
-                                <div style={{ fontSize: '18px', fontWeight: '600', color: '#111111', marginBottom: '8px' }}>
+                            <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '20px' }}>
+                                <div style={{ fontSize: '18px', fontWeight: 600, color: '#111111', marginBottom: '8px' }}>
                                     {request.organization?.name}
                                 </div>
                                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
@@ -146,113 +133,70 @@ export default function RequestDetails() {
                             </div>
                         </div>
 
-                        {/* Request Details */}
                         <div>
                             <h2 className="section-title">Request Details</h2>
                             <div style={{ display: 'grid', gap: '16px' }}>
                                 <div>
-                                    <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: '600' }}>Service Type</div>
+                                    <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600 }}>Service Type</div>
                                     <div style={{ fontSize: '14px', color: '#111111', marginTop: '4px', textTransform: 'capitalize' }}>
-                                        {request.serviceType}
+                                        {request.service || request.serviceType}
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: '600' }}>Preferred Date</div>
+                                    <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600 }}>Preferred Date</div>
                                     <div style={{ fontSize: '14px', color: '#111111', marginTop: '4px' }}>
-                                        {formatDate(request.preferredDate)}
+                                        {formatDate(request.requested_date || request.preferredDate)}
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: '600' }}>Location</div>
+                                    <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600 }}>Location</div>
                                     <div style={{ fontSize: '14px', color: '#111111', marginTop: '4px' }}>
                                         {request.location || 'Not specified'}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', fontWeight: '600' }}>Budget</div>
-                                    <div style={{ fontSize: '14px', color: '#111111', marginTop: '4px' }}>
-                                        {request.budget ? `${request.budget} SAR` : 'Not specified'}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Description & Actions */}
                     <div>
-                        <div style={{
-                            background: '#ffffff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '10px',
-                            padding: '24px',
-                        }}>
+                        <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '24px' }}>
                             <h2 className="section-title">Description</h2>
                             <p style={{ color: '#6b7280', lineHeight: '1.6', marginBottom: '40px' }}>
                                 {request.description}
                             </p>
 
                             {error && (
-                                <div style={{
-                                    background: '#fee2e2',
-                                    border: '1px solid #fecaca',
-                                    color: '#991b1b',
-                                    padding: '12px 16px',
-                                    borderRadius: '6px',
-                                    marginBottom: '24px',
-                                    fontSize: '14px',
-                                }}>
+                                <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', padding: '12px 16px', borderRadius: '6px', marginBottom: '24px', fontSize: '14px' }}>
                                     {error}
                                 </div>
                             )}
 
-                            {/* Request Actions */}
                             {request.status === 'pending' && (
                                 <div style={{ display: 'grid', gap: '12px', marginBottom: '40px' }}>
-                                    <Button
-                                        variant="primary"
-                                        fullWidth
-                                        onClick={handleAccept}
-                                        disabled={responding}
-                                    >
+                                    <Button variant="primary" fullWidth onClick={handleAccept} disabled={responding}>
                                         {responding ? 'Processing...' : 'Accept Request'}
                                     </Button>
-                                    <Button
-                                        variant="danger"
-                                        fullWidth
-                                        onClick={handleReject}
-                                        disabled={responding}
-                                    >
+                                    <Button variant="danger" fullWidth onClick={handleReject} disabled={responding}>
                                         Reject Request
                                     </Button>
                                 </div>
                             )}
 
-                            {/* Response Section */}
                             <h2 className="section-title">Response</h2>
 
-                            {request.companyResponse && (
-                                <div style={{
-                                    background: '#f0fdf4',
-                                    border: '1px solid #dcfce7',
-                                    borderRadius: '10px',
-                                    padding: '16px',
-                                    marginBottom: '16px',
-                                }}>
-                                    <div style={{ fontSize: '12px', color: '#166534', fontWeight: '600', marginBottom: '8px' }}>
-                                        Your response (sent on {formatDate(request.companyResponseDate)})
+                            {request.response_note && (
+                                <div style={{ background: '#f0fdf4', border: '1px solid #dcfce7', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '12px', color: '#166534', fontWeight: 600, marginBottom: '8px' }}>
+                                        Your response
                                     </div>
                                     <p style={{ color: '#166534', lineHeight: '1.6', fontSize: '14px' }}>
-                                        {request.companyResponse}
+                                        {request.response_note}
                                     </p>
                                 </div>
                             )}
 
                             {!responseMode ? (
-                                <Button
-                                    variant="secondary"
-                                    fullWidth
-                                    onClick={() => setResponseMode(true)}
-                                >
+                                <Button variant="secondary" fullWidth onClick={() => setResponseMode(true)}>
                                     Add Response
                                 </Button>
                             ) : (
@@ -262,25 +206,15 @@ export default function RequestDetails() {
                                         <textarea
                                             className="form-textarea"
                                             value={response}
-                                            onChange={(e) => setResponse(e.target.value)}
+                                            onChange={(event) => setResponse(event.target.value)}
                                             placeholder="Send a message to the organization about their request..."
                                             style={{ minHeight: '100px' }}
                                             required
                                         />
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                        <Button
-                                            variant="secondary"
-                                            type="button"
-                                            onClick={() => setResponseMode(false)}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            variant="primary"
-                                            type="submit"
-                                            disabled={responding}
-                                        >
+                                        <Button variant="secondary" type="button" onClick={() => setResponseMode(false)}>Cancel</Button>
+                                        <Button variant="primary" type="submit" disabled={responding}>
                                             {responding ? 'Sending...' : 'Send Response'}
                                         </Button>
                                     </div>

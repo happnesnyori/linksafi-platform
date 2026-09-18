@@ -221,7 +221,7 @@ export default function RequestDetails() {
                                 }}>
                                     <div style={{ fontWeight: '600', marginBottom: '8px' }}>✓ Completed</div>
                                     <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
-                                        This request has been completed. Thank you for using LinkSafi!
+                                        This request has been completed. Thank you for using SafiLink!
                                     </p>
                                 </div>
                             )}

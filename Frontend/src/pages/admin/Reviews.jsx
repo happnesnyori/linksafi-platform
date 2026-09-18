@@ -4,9 +4,10 @@ import {
     EyeOff,
     Trash2,
     Eye,
+    Star,
     ChevronLeft,
     ChevronRight,
-    Star,
+    Award,
 } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import adminService from '../../services/adminService';
@@ -15,10 +16,32 @@ const ITEMS_PER_PAGE = 10;
 
 const statusOptions = [
     { value: '', label: 'All Statuses' },
-    { value: 'visible', label: 'Visible' },
-    { value: 'hidden', label: 'Hidden' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'published', label: 'Published' },
+    { value: 'rejected', label: 'Rejected' },
     { value: 'removed', label: 'Removed' },
 ];
+
+const statusLabels = {
+    pending: 'Pending',
+    published: 'Published',
+    rejected: 'Rejected',
+    removed: 'Removed',
+    visible: 'Published',
+    hidden: 'Rejected',
+};
+
+const getStatusBadgeClass = (status) => {
+    const map = {
+        pending: 'admin-badge-hidden',
+        published: 'admin-badge-visible',
+        rejected: 'admin-badge-removed',
+        removed: 'admin-badge-removed',
+        visible: 'admin-badge-visible',
+        hidden: 'admin-badge-removed',
+    };
+    return map[status] || 'admin-badge-hidden';
+};
 
 const StarRating = ({ rating }) => {
     const stars = Array.from({ length: 5 }, (_, i) => i + 1);
@@ -37,15 +60,6 @@ const StarRating = ({ rating }) => {
             </span>
         </div>
     );
-};
-
-const getStatusBadgeClass = (status) => {
-    const map = {
-        visible: 'admin-badge-visible',
-        hidden: 'admin-badge-hidden',
-        removed: 'admin-badge-removed',
-    };
-    return map[status] || 'admin-badge-visible';
 };
 
 export default function AdminReviews() {
@@ -86,7 +100,7 @@ export default function AdminReviews() {
             const data = await adminService.getAllCompanies();
             setCompanies(data);
         } catch (err) {
-            // silent
+            addToast('Failed to load companies', 'error');
         }
     };
 
@@ -102,44 +116,26 @@ export default function AdminReviews() {
         loadCompanies();
     }, []);
 
-    const handleHide = async (id) => {
+    const runAction = async (id, action, successMessage) => {
         try {
             setActionLoading(id);
-            await adminService.hideReview(id);
-            addToast('Review hidden', 'success');
-            loadReviews();
+            await action(id);
+            addToast(successMessage, 'success');
+            await loadReviews();
         } catch (err) {
-            addToast(err.data?.message || 'Failed to hide review', 'error');
+            addToast(err.message || 'Failed to update review', 'error');
         } finally {
             setActionLoading(null);
         }
     };
 
-    const handleRemove = async (id) => {
-        try {
-            setActionLoading(id);
-            await adminService.removeReview(id);
-            addToast('Review removed', 'success');
-            loadReviews();
-        } catch (err) {
-            addToast(err.data?.message || 'Failed to remove review', 'error');
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const handleRestore = async (id) => {
-        try {
-            setActionLoading(id);
-            await adminService.restoreReview(id);
-            addToast('Review restored', 'success');
-            loadReviews();
-        } catch (err) {
-            addToast(err.data?.message || 'Failed to restore review', 'error');
-        } finally {
-            setActionLoading(null);
-        }
-    };
+    const handleApprove = (id) => runAction(id, adminService.approveReview, 'Review published');
+    const handleReject = (id) => runAction(id, adminService.rejectReview, 'Review rejected');
+    const handleUnpublish = (id) => runAction(id, adminService.unpublishReview, 'Review unpublished');
+    const handleFeature = (id) => runAction(id, adminService.toggleFeaturedReview, 'Review featured');
+    const handleUnfeature = (id) => runAction(id, adminService.toggleFeaturedReview, 'Review unfeatured');
+    const handleRemove = (id) => runAction(id, adminService.removeReview, 'Review removed');
+    const handleRestore = (id) => runAction(id, adminService.restoreReview, 'Review restored');
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '-';
@@ -160,7 +156,7 @@ export default function AdminReviews() {
             <div className="admin-page-header">
                 <div>
                     <h1 className="admin-page-title">Reviews</h1>
-                    <p className="admin-page-subtitle">Moderate and manage customer reviews</p>
+                    <p className="admin-page-subtitle">Moderate customer reviews and manage featured testimonials</p>
                 </div>
             </div>
 
@@ -171,23 +167,15 @@ export default function AdminReviews() {
                         type="text"
                         placeholder="Search reviews..."
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(event) => setSearch(event.target.value)}
                     />
                 </div>
-                <select
-                    className="admin-filter-select"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                    {statusOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <select className="admin-filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                    {statusOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                 </select>
-                <select
-                    className="admin-filter-select"
-                    value={companyFilter}
-                    onChange={(e) => setCompanyFilter(e.target.value)}
-                >
+                <select className="admin-filter-select" value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value)}>
                     <option value="">All Companies</option>
                     {companies.map((company) => (
                         <option key={company.id} value={company.id}>{company.name}</option>
@@ -214,6 +202,7 @@ export default function AdminReviews() {
                                     <th>Rating</th>
                                     <th>Comment</th>
                                     <th>Status</th>
+                                    <th>Featured</th>
                                     <th>Date</th>
                                     <th>Actions</th>
                                 </tr>
@@ -223,55 +212,50 @@ export default function AdminReviews() {
                                     <tr key={review.id}>
                                         <td className="admin-table-cell-primary">{review.company_name || review.company?.name || '-'}</td>
                                         <td>{review.customer_name || review.customer?.name || 'N/A'}</td>
-                                        <td>
-                                            <StarRating rating={review.rating || 0} />
-                                        </td>
+                                        <td><StarRating rating={review.rating || 0} /></td>
                                         <td className="admin-table-cell-muted" style={{ maxWidth: '260px' }}>
                                             {truncate(review.comment || review.text || '')}
                                         </td>
                                         <td>
                                             <span className={`admin-status-badge ${getStatusBadgeClass(review.status)}`}>
-                                                {review.status}
+                                                {statusLabels[review.status] || review.status}
                                             </span>
+                                        </td>
+                                        <td>
+                                            {review.is_featured ? (
+                                                <span className="admin-badge-visible"><Award size={13} /> Featured</span>
+                                            ) : (
+                                                <span className="admin-badge-hidden">Not featured</span>
+                                            )}
                                         </td>
                                         <td className="admin-table-cell-muted">{formatDate(review.created_at || review.date)}</td>
                                         <td>
                                             <div className="admin-table-cell-actions">
-                                                {review.status === 'visible' && (
-                                                    <button
-                                                        className="admin-btn admin-btn-ghost admin-btn-sm"
-                                                        onClick={() => handleHide(review.id)}
-                                                        disabled={actionLoading === review.id}
-                                                    >
-                                                        <EyeOff size={14} /> Hide
-                                                    </button>
+                                                {review.status === 'pending' && (
+                                                    <>
+                                                        <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => handleApprove(review.id)} disabled={actionLoading === review.id}>Approve</button>
+                                                        <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => handleReject(review.id)} disabled={actionLoading === review.id}>Reject</button>
+                                                    </>
                                                 )}
-                                                {review.status === 'hidden' && (
-                                                    <button
-                                                        className="admin-btn admin-btn-amber admin-btn-sm"
-                                                        onClick={() => handleRestore(review.id)}
-                                                        disabled={actionLoading === review.id}
-                                                    >
-                                                        <Eye size={14} /> Restore
-                                                    </button>
+                                                {review.status === 'published' && (
+                                                    <>
+                                                        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleUnpublish(review.id)} disabled={actionLoading === review.id}><EyeOff size={14} /> Unpublish</button>
+                                                        {review.is_featured ? (
+                                                            <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleUnfeature(review.id)} disabled={actionLoading === review.id}>Unfeature</button>
+                                                        ) : (
+                                                            <button className="admin-btn admin-btn-amber admin-btn-sm" onClick={() => handleFeature(review.id)} disabled={actionLoading === review.id}>Feature</button>
+                                                        )}
+                                                        <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => handleRemove(review.id)} disabled={actionLoading === review.id}><Trash2 size={14} /> Remove</button>
+                                                    </>
                                                 )}
-                                                {(review.status === 'visible' || review.status === 'hidden') && (
-                                                    <button
-                                                        className="admin-btn admin-btn-danger admin-btn-sm"
-                                                        onClick={() => handleRemove(review.id)}
-                                                        disabled={actionLoading === review.id}
-                                                    >
-                                                        <Trash2 size={14} /> Remove
-                                                    </button>
+                                                {review.status === 'rejected' && (
+                                                    <>
+                                                        <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => handleApprove(review.id)} disabled={actionLoading === review.id}>Approve</button>
+                                                        <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => handleRemove(review.id)} disabled={actionLoading === review.id}><Trash2 size={14} /> Remove</button>
+                                                    </>
                                                 )}
                                                 {review.status === 'removed' && (
-                                                    <button
-                                                        className="admin-btn admin-btn-amber admin-btn-sm"
-                                                        onClick={() => handleRestore(review.id)}
-                                                        disabled={actionLoading === review.id}
-                                                    >
-                                                        <Eye size={14} /> Restore
-                                                    </button>
+                                                    <button className="admin-btn admin-btn-amber admin-btn-sm" onClick={() => handleRestore(review.id)} disabled={actionLoading === review.id}><Eye size={14} /> Restore</button>
                                                 )}
                                             </div>
                                         </td>
@@ -283,30 +267,12 @@ export default function AdminReviews() {
 
                     {totalPages > 1 && (
                         <div className="admin-pagination">
-                            <span className="admin-pagination-info">
-                                {totalItems} total
-                            </span>
-                            <button
-                                disabled={currentPage === 1}
-                                onClick={() => setCurrentPage((p) => p - 1)}
-                            >
-                                <ChevronLeft size={16} />
-                            </button>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <button
-                                    key={page}
-                                    className={page === currentPage ? 'active' : ''}
-                                    onClick={() => setCurrentPage(page)}
-                                >
-                                    {page}
-                                </button>
+                            <span className="admin-pagination-info">{totalItems} total</span>
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage((page) => page - 1)}><ChevronLeft size={16} /></button>
+                            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                                <button key={page} className={page === currentPage ? 'active' : ''} onClick={() => setCurrentPage(page)}>{page}</button>
                             ))}
-                            <button
-                                disabled={currentPage === totalPages}
-                                onClick={() => setCurrentPage((p) => p + 1)}
-                            >
-                                <ChevronRight size={16} />
-                            </button>
+                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage((page) => page + 1)}><ChevronRight size={16} /></button>
                         </div>
                     )}
                 </>

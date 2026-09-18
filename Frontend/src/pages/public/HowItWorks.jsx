@@ -15,7 +15,7 @@ export default function HowItWorks() {
         {
             number: '01',
             title: 'Select Your Space & Required Service',
-            desc: 'Specify whether you manage a University Campus (lecture halls, student dorms, and labs) or an Apartment Complex (tenant units, common areas, and private hostels). Then choose Cleaning, Decoration, or Both.'
+            desc: 'Specify whether you manage a University Campus (lecture halls, student dorms, and labs) or an Apartment Complex (tenant units, common areas, and private hostels). Then choose Cleaning or Combined Services.'
         },
         {
             number: '02',
@@ -44,19 +44,19 @@ export default function HowItWorks() {
                             <span>Institutional & Residential Workflow</span>
                         </div>
 
-                        <h2>How LinkSafi Works</h2>
+                        <h2>How SafiLink Works</h2>
 
-                        <p className="how-subtitle">
-                            We&apos;ve eliminated procurement friction so universities and apartment managers
-                            can book trusted cleanliness and decoration specialists in minutes.
-                        </p>
+                            <p className="how-subtitle">
+                                We&apos;ve eliminated procurement friction so universities and apartment managers
+                                can book trusted cleanliness specialists in minutes.
+                            </p>
                     </div>
 
                     <div className="how-grid">
                         <div className="how-visual">
                             <img
                                 src={image2}
-                                alt="LinkSafi verified cleaning and decoration professionals"
+                                alt="SafiLink verified cleaning professionals"
                             />
 
                             <div className="how-verified-badge">

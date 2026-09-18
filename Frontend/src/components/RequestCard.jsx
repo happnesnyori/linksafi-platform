@@ -9,30 +9,26 @@ export default function RequestCard({ request }) {
         <div className="request-card">
             <div className="request-card-header">
                 <div className="request-info">
-                    <h4 className="request-service">{request.service || 'Service Request'}</h4>
-                    <p className="request-company">
-                        {request.company?.name || request.companyName || 'Company'}
-                    </p>
+                    <h4 className="request-service">{request.service || request.serviceType || 'Service Request'}</h4>
+                    <p className="request-company">{request.company?.name || request.companyName || 'Company'}</p>
                 </div>
                 <StatusBadge status={request.status} />
             </div>
 
             <div className="request-card-body">
                 <div className="request-meta">
-                    {request.date && (
+                    {(request.requested_date || request.preferredDate || request.date) && (
                         <div className="meta-item">
                             <span className="meta-label">Date:</span>
-                            <span className="meta-value">{formatDate(request.date)}</span>
+                            <span className="meta-value">{formatDate(request.requested_date || request.preferredDate || request.date)}</span>
                         </div>
                     )}
-
                     {request.location && (
                         <div className="meta-item">
                             <span className="meta-label">Location:</span>
                             <span className="meta-value">{request.location}</span>
                         </div>
                     )}
-
                     {request.description && (
                         <div className="meta-item full-width">
                             <span className="meta-label">Description:</span>
@@ -43,12 +39,7 @@ export default function RequestCard({ request }) {
             </div>
 
             <div className="request-card-footer">
-                <Link
-                    to={`/requests/${request.id}`}
-                    className="view-details-link"
-                >
-                    View Details →
-                </Link>
+                <Link to={`/company/requests/${request.id}`} className="view-details-link">View Details →</Link>
             </div>
         </div>
     );

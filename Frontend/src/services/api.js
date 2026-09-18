@@ -30,13 +30,14 @@ export const clearToken = () => {
 };
 
 const api = async (endpoint, options = {}) => {
+    const { skipAuth, ...rest } = options;
     const url = endpoint.startsWith('http')
         ? endpoint
         : `${API_BASE_URL}${endpoint}`;
 
     const config = {
-        headers: getHeaders(),
-        ...options,
+        ...rest,
+        headers: skipAuth ? { 'Content-Type': 'application/json' } : getHeaders(),
     };
 
     if (config.body instanceof FormData) {
@@ -58,7 +59,7 @@ const api = async (endpoint, options = {}) => {
         let errorMessage = 'An error occurred';
 
         if (response.status === 404) {
-            errorMessage = 'Service request endpoint not found. Please check the backend URL configuration.';
+            errorMessage = errorData.message || errorData.detail || 'The requested resource was not found.';
         } else if (response.status === 400) {
             const detail = Array.isArray(errorData.detail)
                 ? errorData.detail.join(' ')

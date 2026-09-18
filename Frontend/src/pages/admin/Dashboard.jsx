@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import adminService from '../../services/adminService';
+import CompaniesByService from '../../components/admin/CompaniesByService';
 import '../../styles/admin.css';
 
 const StatCard = ({ title, value, icon: Icon, tone, subtitle }) => (
@@ -72,7 +73,7 @@ export default function AdminDashboard() {
             <div className="admin-page-header">
                 <div>
                     <h1 className="admin-page-title">Dashboard Overview</h1>
-                    <p className="admin-page-subtitle">Monitor and manage the LinkSafi platform</p>
+                    <p className="admin-page-subtitle">Monitor and manage the SafiLink platform</p>
                 </div>
                 <span className="admin-page-context">Today&apos;s platform snapshot</span>
             </div>
@@ -97,7 +98,7 @@ export default function AdminDashboard() {
                     value={stats.total_organizations}
                     icon={Users}
                     tone="blue"
-                    subtitle="Organizations on LinkSafi"
+                    subtitle="Organizations on SafiLink"
                 />
                 <StatCard
                     title="Open Service Requests"
@@ -107,6 +108,22 @@ export default function AdminDashboard() {
                     subtitle="Awaiting company response"
                 />
             </div>
+
+            <section className="admin-dashboard-section">
+                <div className="admin-section-heading">
+                    <div>
+                        <span className="admin-section-eyebrow">Service mix</span>
+                        <h2>Companies by service</h2>
+                    </div>
+                </div>
+                <CompaniesByService
+                    data={{
+                        cleaning: stats.cleaning_companies,
+                        decoration: stats.decoration_companies,
+                        both: stats.both_companies,
+                    }}
+                />
+            </section>
 
             <section className="admin-dashboard-section">
                 <div className="admin-section-heading">

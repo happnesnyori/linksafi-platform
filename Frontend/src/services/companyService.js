@@ -1,64 +1,116 @@
 import api from './api';
 
+export const createCompany = async (companyData) => {
+    const response = await api('/companies/', {
+        method: 'POST',
+        body: companyData,
+    });
+    return response;
+};
+
 export const getCompanies = async (filters = {}) => {
     const params = new URLSearchParams();
-    if (filters.service) params.append('service', filters.service);
     if (filters.search) params.append('search', filters.search);
+    if (filters.service) params.append('service', filters.service);
+    if (filters.specialty) params.append('specialty', filters.specialty);
+    if (filters.location) params.append('location', filters.location);
     if (filters.page) params.append('page', filters.page);
-    if (filters.limit) params.append('limit', filters.limit);
+    if (filters.limit) params.append('page_size', filters.limit);
 
     const queryString = params.toString();
-    const endpoint = queryString ? `/companies/?${queryString}` : '/companies/';
-    const response = await api(endpoint);
-    const list = response?.results || response?.companies || (Array.isArray(response) ? response : []);
-    return list;
+    const response = await api(`/companies/${queryString ? `?${queryString}` : ''}`);
+    return response;
 };
 
 export const getCompanyById = async (id) => {
     const response = await api(`/companies/${id}/`);
-    if (response && response.id) return response;
-    throw new Error('Company not found');
+    return response;
 };
 
-export const createCompany = async (data) => {
-    const response = await api('/companies/', {
+export const getMyCompany = async () => {
+    const response = await api('/companies/me/');
+    return response;
+};
+
+export const updateMyCompany = async (companyData) => {
+    const response = await api('/companies/me/', {
+        method: 'PUT',
+        body: companyData,
+    });
+    return response;
+};
+
+export const getServicesCatalog = async () => {
+    const response = await api('/services/');
+    return response.results || response || [];
+};
+
+export const createService = async (serviceData) => {
+    const response = await api('/services/', {
         method: 'POST',
-        body: data,
+        body: serviceData,
     });
     return response;
 };
 
-export const updateCompany = async (id, data) => {
-    const response = await api(`/companies/${id}/`, {
+export const updateMyServices = async (servicesPayload) => {
+    const payload = Array.isArray(servicesPayload)
+        ? { service_ids: servicesPayload }
+        : servicesPayload;
+    const response = await api('/companies/me/services/', {
         method: 'PUT',
-        body: data,
+        body: payload,
     });
     return response;
 };
 
-export const updateServices = async (id, services) => {
-    const response = await api(`/companies/${id}/services/`, {
-        method: 'PUT',
-        body: { services },
+export const updateServices = async (_userId, servicesPayload) => updateMyServices(servicesPayload);
+
+export const getCompanyGallery = async () => {
+    const response = await api('/companies/me/gallery/');
+    return response.results || response || [];
+};
+
+export const uploadGalleryImage = async (imageData) => {
+    const response = await api('/companies/me/gallery/', {
+        method: 'POST',
+        body: imageData,
     });
     return response;
 };
 
-export const deleteCompany = async (id) => {
-    const response = await api(`/companies/${id}/`, {
+export const deleteGalleryImage = async (imageId) => {
+    const response = await api(`/companies/me/gallery/${imageId}/`, {
         method: 'DELETE',
     });
     return response;
 };
 
-// Default export for easier importing
+export const getCompanyReviews = async (companyId) => {
+    const response = await api(`/reviews/company/${companyId}/`);
+    return response.results || response || [];
+};
+
+export const getFeaturedReviews = async () => {
+    const response = await api('/reviews/featured/');
+    return response.results || response || [];
+};
+
 export const companyService = {
     getCompanies,
     getCompanyById,
+    getMyCompany,
+    updateMyCompany,
     createCompany,
-    updateCompany,
+    getServicesCatalog,
+    createService,
+    updateMyServices,
     updateServices,
-    deleteCompany,
+    getCompanyGallery,
+    uploadGalleryImage,
+    deleteGalleryImage,
+    getCompanyReviews,
+    getFeaturedReviews,
 };
 
 export default companyService;

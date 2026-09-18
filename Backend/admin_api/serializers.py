@@ -1,14 +1,19 @@
 import json
+import secrets
 
 from rest_framework import serializers
 
 from accounts.models import User
-from companies.models import Company
+from companies.models import Company, Service
 from reviews.models import Review
 from service_requests.models import ServiceRequest
 
+from .models import AdminAuditLog
+
 
 class AdminUserSerializer(serializers.ModelSerializer):
+    total_requests = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -18,13 +23,18 @@ class AdminUserSerializer(serializers.ModelSerializer):
             "name",
             "role",
             "phone",
+            "organization_type",
             "is_active",
             "is_staff",
             "is_superuser",
             "date_joined",
             "last_login",
+            "total_requests",
         )
         read_only_fields = ("id", "date_joined", "last_login")
+
+    def get_total_requests(self, obj):
+        return obj.sent_requests.count()
 
 
 class AdminUserDetailSerializer(serializers.ModelSerializer):
@@ -98,6 +108,13 @@ class AdminCompanySerializer(serializers.ModelSerializer):
     owner_email = serializers.EmailField(source="owner.email", read_only=True)
     owner_name = serializers.CharField(source="owner.name", read_only=True)
 
+    service_items = serializers.SerializerMethodField()
+    service_ids = serializers.SerializerMethodField()
+    gallery_images = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    reviews_count = serializers.SerializerMethodField()
+    requests_received_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Company
         fields = (
@@ -106,20 +123,61 @@ class AdminCompanySerializer(serializers.ModelSerializer):
             "owner_email",
             "owner_name",
             "name",
+            "tagline",
             "email",
             "phone",
             "description",
             "location",
             "logo",
+            "cover_image",
             "services",
+            "service_items",
+            "service_ids",
             "specialties",
+            "gallery_images",
+            "rating",
+            "reviews_count",
+            "requests_received_count",
             "verification_status",
             "status",
             "is_active",
+            "profile_views",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "owner", "owner_email", "owner_name", "created_at", "updated_at")
+        read_only_fields = ("id", "owner", "owner_email", "owner_name", "service_ids", "rating", "reviews_count", "requests_received_count", "profile_views", "created_at", "updated_at")
+
+    def get_requests_received_count(self, obj):
+        return obj.received_requests.count()
+
+    def get_service_items(self, obj):
+        from companies.serializers import ServiceSerializer
+        return ServiceSerializer(obj.service_items.all(), many=True).data
+
+    def get_service_ids(self, obj):
+        return list(obj.service_items.values_list("id", flat=True))
+
+    def get_gallery_images(self, obj):
+        from companies.serializers import GalleryImageSerializer
+        return GalleryImageSerializer(obj.gallery_images.all(), many=True).data
+
+    def get_rating(self, obj):
+        from reviews.models import Review
+        from django.db.models import Avg
+        agg = Review.objects.filter(
+            company=obj,
+            status=Review.STATUS_PUBLISHED,
+        ).aggregate(avg=Avg("rating"))
+        if agg["avg"] is not None:
+            return round(float(agg["avg"]), 1)
+        return None
+
+    def get_reviews_count(self, obj):
+        from reviews.models import Review
+        return Review.objects.filter(
+            company=obj,
+            status=Review.STATUS_PUBLISHED,
+        ).count()
 
 
 class AdminCompanyCreateSerializer(serializers.ModelSerializer):
@@ -237,13 +295,113 @@ class AdminReviewSerializer(serializers.ModelSerializer):
             "customer",
             "customer_name",
             "customer_email",
+            "service_request",
+            "service_name",
             "rating",
             "comment",
             "status",
+            "is_featured",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "company", "customer", "company_name", "customer_name", "customer_email", "created_at", "updated_at")
+        read_only_fields = ("id", "company", "customer", "company_name", "customer_name", "customer_email", "service_request", "status", "is_featured", "created_at", "updated_at")
+
+
+class AdminServiceSerializer(serializers.ModelSerializer):
+    companies_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Service
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "category",
+            "description",
+            "image",
+            "is_active",
+            "ordering",
+            "companies_count",
+        )
+        read_only_fields = ("id", "slug", "companies_count")
+
+    def get_companies_count(self, obj):
+        return obj.companies.count()
+
+    def validate_category(self, value):
+        allowed = {c[0] for c in Service.CATEGORY_CHOICES}
+        if value not in allowed:
+            raise serializers.ValidationError("Category must be 'cleaning' or 'decoration'.")
+        return value
+
+    def create(self, validated_data):
+        from django.utils.text import slugify
+
+        base_slug = slugify(validated_data.get("name", "")) or "service"
+        slug = base_slug
+        suffix = 1
+        while Service.objects.filter(slug=slug).exists():
+            suffix += 1
+            slug = f"{base_slug}-{suffix}"
+        return Service.objects.create(slug=slug, **validated_data)
+
+
+class AdminAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "email", "name", "is_staff", "is_superuser", "date_joined", "last_login")
+        read_only_fields = fields
+
+
+class AdminAdminCreateSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    name = serializers.CharField(max_length=120)
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value.lower()
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+        username = email.split("@")[0]
+        base_username = username
+        i = 1
+        while User.objects.filter(username=username).exists():
+            i += 1
+            username = f"{base_username}{i}"
+
+        temp_password = secrets.token_urlsafe(9)
+        user = User(
+            username=username,
+            email=email,
+            name=validated_data["name"],
+            role=User.ROLE_ORGANIZATION,
+            is_staff=True,
+        )
+        user.set_password(temp_password)
+        user.save()
+        user.temp_password = temp_password
+        return user
+
+
+class AdminAuditLogSerializer(serializers.ModelSerializer):
+    actor_email = serializers.EmailField(source="actor.email", read_only=True, default=None)
+
+    class Meta:
+        model = AdminAuditLog
+        fields = (
+            "id",
+            "actor",
+            "actor_email",
+            "action",
+            "target_type",
+            "target_id",
+            "target_repr",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
 
 
 class AdminDashboardStatsSerializer(serializers.Serializer):
@@ -260,3 +418,6 @@ class AdminDashboardStatsSerializer(serializers.Serializer):
     accepted_requests = serializers.IntegerField()
     rejected_requests = serializers.IntegerField()
     completed_requests = serializers.IntegerField()
+    cleaning_companies = serializers.IntegerField()
+    decoration_companies = serializers.IntegerField()
+    both_companies = serializers.IntegerField()

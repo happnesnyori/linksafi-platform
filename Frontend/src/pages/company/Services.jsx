@@ -1,60 +1,96 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Plus, Edit2, X, PlusCircle } from 'lucide-react';
 import CompanyLayout from '../../layouts/CompanyLayout';
-import Button from '../../components/Button';
 import Loading from '../../components/Loading';
-import { useAuth } from '../../context/AuthContext';
-import { updateServices } from '../../services/companyService';
+import { useToast } from '../../components/Toast';
+import { createService, getMyCompany, getServicesCatalog, updateMyServices } from '../../services/companyService';
+import { formatService } from '../../utils/helpers';
+
+const emptyNewService = { name: '', category: 'cleaning', description: '' };
 
 export default function ManageServices() {
-    const navigate = useNavigate();
-    const { user } = useAuth();
+    const { addToast } = useToast();
+    const [catalog, setCatalog] = useState([]);
+    const [serviceItems, setServiceItems] = useState([]);
+    const [selectedIds, setSelectedIds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [newService, setNewService] = useState(emptyNewService);
+    const [creating, setCreating] = useState(false);
 
-    const [services, setServices] = useState({
-        cleaning: false,
-        decoration: false,
-    });
-
-    useEffect(() => {
-        // Load current services from user data
-        if (user?.services) {
-            setServices({
-                cleaning: user.services.includes('cleaning'),
-                decoration: user.services.includes('decoration'),
-            });
+    const load = async () => {
+        setLoading(true);
+        try {
+            const [catalogData, companyData] = await Promise.all([getServicesCatalog(), getMyCompany()]);
+            setCatalog(Array.isArray(catalogData) ? catalogData : []);
+            const items = Array.isArray(companyData?.service_items) ? companyData.service_items : [];
+            setServiceItems(items);
+            setSelectedIds([...new Set(items.map((s) => s.id).filter(Boolean))]);
+        } catch (err) {
+            addToast(err.message || 'Failed to load services', 'error');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    }, [user]);
-
-    const handleServiceToggle = (service) => {
-        setServices((prev) => ({
-            ...prev,
-            [service]: !prev[service],
-        }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    useEffect(() => {
+        load();
+    }, []);
+
+    const openModal = () => {
         setError('');
-        setSuccess('');
-        setSubmitting(true);
+        setShowCreateForm(false);
+        setNewService(emptyNewService);
+        setModalOpen(true);
+    };
 
+    const handleCreateService = async () => {
+        if (!newService.name.trim()) {
+            setError('Enter a name for the new service');
+            return;
+        }
+        setCreating(true);
+        setError('');
         try {
-            const selectedServices = Object.keys(services).filter((service) => services[service]);
+            await createService({
+                name: newService.name.trim(),
+                category: newService.category,
+                description: newService.description.trim(),
+            });
+            addToast('Service created and added to your offerings', 'success');
+            setNewService(emptyNewService);
+            setShowCreateForm(false);
+            await load();
+        } catch (err) {
+            setError(err.message || 'Failed to create service');
+        } finally {
+            setCreating(false);
+        }
+    };
 
-            if (selectedServices.length === 0) {
-                throw new Error('Please select at least one service');
-            }
+    const toggleSelection = (serviceId) => {
+        setSelectedIds((current) => (
+            current.includes(serviceId)
+                ? current.filter((id) => id !== serviceId)
+                : [...current, serviceId]
+        ));
+    };
 
-            await updateServices(user.id, selectedServices);
-            setSuccess('Services updated successfully');
-            setTimeout(() => {
-                setSuccess('');
-            }, 3000);
+    const handleSave = async () => {
+        if (selectedIds.length === 0) {
+            setError('Select at least one service');
+            return;
+        }
+        setSubmitting(true);
+        setError('');
+        try {
+            await updateMyServices(selectedIds);
+            addToast('Services updated', 'success');
+            setModalOpen(false);
+            await load();
         } catch (err) {
             setError(err.message || 'Failed to update services');
         } finally {
@@ -64,129 +100,167 @@ export default function ManageServices() {
 
     if (loading) return <CompanyLayout><Loading /></CompanyLayout>;
 
+    const groupedCatalog = catalog.reduce((groups, service) => {
+        const category = service.category || 'other';
+        groups[category] = groups[category] || [];
+        groups[category].push(service);
+        return groups;
+    }, {});
+
     return (
         <CompanyLayout>
-            <div className="page-container">
-                <div style={{ marginBottom: '40px' }}>
-                    <h1 className="page-title">Manage Services</h1>
-                    <p className="page-subtitle">Update the services your company offers</p>
+            <div className="cp-section-heading">
+                <h2 style={{ fontSize: '15px', color: 'var(--cp-text-secondary)' }}>
+                    {serviceItems.length} service{serviceItems.length === 1 ? '' : 's'} offered
+                </h2>
+                <button className="cp-btn cp-btn-primary" onClick={openModal}>
+                    <Plus size={15} /> Add Service
+                </button>
+            </div>
+
+            {serviceItems.length > 0 ? (
+                <div className="cp-service-grid">
+                    {serviceItems.map((service) => (
+                        <div key={service.id} className="cp-service-card">
+                            <div className="cp-service-card-head">
+                                <span className={`cp-service-dot ${service.category}`} />
+                                <span className="cp-service-name">{service.name}</span>
+                                <button
+                                    className="cp-icon-btn"
+                                    style={{ width: '30px', height: '30px' }}
+                                    aria-label={`Edit ${service.name}`}
+                                    onClick={openModal}
+                                >
+                                    <Edit2 size={13} />
+                                </button>
+                            </div>
+                            <span className="cp-service-category">{formatService(service.category)}</span>
+                            {service.description && <p className="cp-service-desc">{service.description}</p>}
+                        </div>
+                    ))}
                 </div>
+            ) : (
+                <div className="cp-card cp-empty">
+                    No services selected yet. Click "Add Service" to choose from the catalog.
+                </div>
+            )}
 
-                <div style={{ maxWidth: '600px' }}>
-                    <div style={{
-                        background: '#ffffff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '10px',
-                        padding: '32px',
-                    }}>
-                        {error && (
-                            <div style={{
-                                background: '#fee2e2',
-                                border: '1px solid #fecaca',
-                                color: '#991b1b',
-                                padding: '12px 16px',
-                                borderRadius: '6px',
-                                marginBottom: '24px',
-                                fontSize: '14px',
-                            }}>
-                                {error}
-                            </div>
-                        )}
-
-                        {success && (
-                            <div style={{
-                                background: '#dcfce7',
-                                border: '1px solid #86efac',
-                                color: '#166534',
-                                padding: '12px 16px',
-                                borderRadius: '6px',
-                                marginBottom: '24px',
-                                fontSize: '14px',
-                            }}>
-                                ✓ {success}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit}>
-                            <div style={{ marginBottom: '32px' }}>
-                                <h2 className="section-title" style={{ marginBottom: '20px' }}>
-                                    Services Offered
-                                </h2>
-
-                                <div style={{ display: 'grid', gap: '20px' }}>
-                                    {[
-                                        {
-                                            id: 'cleaning',
-                                            title: 'Cleaning Services',
-                                            description: 'Professional cleaning for offices, residences, and facilities',
-                                            icon: '🧹',
-                                        },
-                                        {
-                                            id: 'decoration',
-                                            title: 'Decoration Services',
-                                            description: 'Interior decoration, design, and installation services',
-                                            icon: '🎨',
-                                        },
-                                    ].map((service) => (
-                                        <label
-                                            key={service.id}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '16px',
-                                                padding: '16px',
-                                                border: `2px solid ${services[service.id] ? '#2563eb' : '#e5e7eb'}`,
-                                                borderRadius: '10px',
-                                                cursor: 'pointer',
-                                                background: services[service.id] ? '#eff6ff' : '#ffffff',
-                                                transition: 'all 0.2s',
-                                            }}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={services[service.id]}
-                                                onChange={() => handleServiceToggle(service.id)}
-                                                style={{
-                                                    width: '20px',
-                                                    height: '20px',
-                                                    cursor: 'pointer',
-                                                }}
-                                            />
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontSize: '16px', fontWeight: '600', color: '#111111', marginBottom: '4px' }}>
-                                                    {service.icon} {service.title}
-                                                </div>
-                                                <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                                    {service.description}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    ))}
+            {modalOpen && (
+                <div className="cp-modal-overlay" onClick={() => setModalOpen(false)}>
+                    <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="cp-modal-head">
+                            <h3>Choose your services</h3>
+                            <button className="cp-modal-close" onClick={() => setModalOpen(false)} aria-label="Close">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="cp-modal-body">
+                            {error && <div className="cp-alert cp-alert-error">{error}</div>}
+                            {Object.entries(groupedCatalog).map(([category, services]) => (
+                                <div key={category}>
+                                    <h4 className="cp-heading" style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', textTransform: 'capitalize' }}>
+                                        {formatService(category)}
+                                    </h4>
+                                    <div style={{ display: 'grid', gap: '10px' }}>
+                                        {services.map((service) => {
+                                            const selected = selectedIds.includes(service.id);
+                                            return (
+                                                <label
+                                                    key={service.id}
+                                                    className={`cp-service-option ${selected ? 'selected' : ''}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selected}
+                                                        onChange={() => toggleSelection(service.id)}
+                                                    />
+                                                    <div>
+                                                        <div className="cp-service-option-title">{service.name}</div>
+                                                        {service.description && (
+                                                            <div className="cp-service-option-desc">{service.description}</div>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
+                            ))}
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                <Button
-                                    variant="secondary"
-                                    size="lg"
-                                    type="button"
-                                    onClick={() => navigate('/company/dashboard')}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    variant="primary"
-                                    size="lg"
-                                    type="submit"
-                                    disabled={submitting}
-                                >
-                                    {submitting ? 'Saving...' : 'Save Services'}
-                                </Button>
+                            <div>
+                                {!showCreateForm ? (
+                                    <button
+                                        type="button"
+                                        className="cp-text-btn"
+                                        onClick={() => setShowCreateForm(true)}
+                                    >
+                                        <PlusCircle size={14} /> Can't find your service? Create a new one
+                                    </button>
+                                ) : (
+                                    <div className="cp-card" style={{ padding: '16px' }}>
+                                        <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px' }}>New service</h4>
+                                        <div className="cp-form-group">
+                                            <label className="cp-form-label">Service name</label>
+                                            <input
+                                                className="cp-form-input"
+                                                value={newService.name}
+                                                onChange={(e) => setNewService((cur) => ({ ...cur, name: e.target.value }))}
+                                                placeholder="e.g. Carpet Steam Cleaning"
+                                            />
+                                        </div>
+                                        <div className="cp-form-group">
+                                            <label className="cp-form-label">Category</label>
+                                            <select
+                                                className="cp-form-input"
+                                                value={newService.category}
+                                                onChange={(e) => setNewService((cur) => ({ ...cur, category: e.target.value }))}
+                                            >
+                                                <option value="cleaning">Cleaning</option>
+                                                <option value="decoration">Decoration</option>
+                                            </select>
+                                        </div>
+                                        <div className="cp-form-group">
+                                            <label className="cp-form-label">Description (optional)</label>
+                                            <textarea
+                                                className="cp-form-textarea"
+                                                style={{ minHeight: '70px' }}
+                                                value={newService.description}
+                                                onChange={(e) => setNewService((cur) => ({ ...cur, description: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div className="cp-form-actions">
+                                            <button
+                                                type="button"
+                                                className="cp-btn cp-btn-ghost"
+                                                onClick={() => { setShowCreateForm(false); setNewService(emptyNewService); }}
+                                                disabled={creating}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="cp-btn cp-btn-primary"
+                                                onClick={handleCreateService}
+                                                disabled={creating}
+                                            >
+                                                {creating ? 'Creating...' : 'Create & add to my services'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        </form>
+                        </div>
+                        <div className="cp-modal-footer">
+                            <button className="cp-btn cp-btn-ghost" onClick={() => setModalOpen(false)} disabled={submitting}>
+                                Cancel
+                            </button>
+                            <button className="cp-btn cp-btn-primary" onClick={handleSave} disabled={submitting}>
+                                {submitting ? 'Saving...' : 'Save Services'}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </CompanyLayout>
     );
 }

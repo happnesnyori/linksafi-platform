@@ -1,7 +1,7 @@
 export const TESTIMONIALS = [
     {
         id: 1,
-        quote: "LinkSafi transformed how we handle semester turnovers. What used to take weeks of procurement now happens in days. The quality of their vetted partners is consistently exceptional.",
+        quote: "SafiLink streamlined our semester turnovers. What used to take weeks of procurement now happens in days. The quality of their vetted cleaning partners is consistently exceptional.",
         name: "Dr. Amina Mwakyusa",
         title: "Deputy Vice-Chancellor",
         institution: "University of Dar es Salaam",
@@ -17,7 +17,7 @@ export const TESTIMONIALS = [
     },
     {
         id: 3,
-        quote: "The decoration and cleaning hybrid packages are a game-changer. We now book one vendor for our graduation ceremonies instead of coordinating three separate suppliers.",
+        quote: "SafiLink's combined service packages are a game-changer. We now book one vendor for our campus events instead of coordinating multiple suppliers.",
         name: "Grace N. Mushi",
         title: "Facilities Director",
         institution: "Arusha Technical College",

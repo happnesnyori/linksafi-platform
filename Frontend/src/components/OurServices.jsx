@@ -22,23 +22,23 @@ const SERVICES = [
         badgeVariant: 'amber',
         title: 'Decoration',
         description:
-            'Styling and event transformation companies for graduations, weddings, conferences, and apartments.',
+            'Verified decoration companies for university events, apartment functions, and venue styling — from setup to teardown.',
         checklist: [
-            'Verified decoration companies',
-            'Event & venue styling',
-            'Custom setups on request',
+            'Verified & rated companies',
+            'Event, venue & apartment decoration',
+            'Flexible booking for one-off events',
         ],
     },
     {
         id: 'both',
         badge: 'Full package',
         badgeVariant: 'navy',
-        title: 'Cleaning & Decoration',
+        title: 'Combined Services',
         description:
-            'Companies that handle both cleaning and decoration together — one booking, one team, less coordination.',
+            'Companies that handle multiple service types together — one booking, one team, less coordination.',
         checklist: [
-            'One company, two services',
-            'Ideal for events & venues',
+            'One company, multiple services',
+            'Ideal for large properties & events',
             'Simplified booking & billing',
         ],
     },
@@ -61,7 +61,7 @@ export default function OurServices({ onServiceClick }) {
                 <span className="our-services-pill">LINK SAFI</span>
                 <h2 className="our-services-title">Our Services</h2>
                 <p className="our-services-subtitle">
-                    Find the right verified company for your cleaning, decoration, or combined needs.
+                    Find the right verified company for your cleaning, decoration, or combined service needs.
                 </p>
 
                 <div className="our-services-grid">

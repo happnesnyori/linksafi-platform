@@ -14,7 +14,6 @@ import {
 import PublicLayout from '../../layouts/PublicLayout';
 import imag1 from '../../assets/images/imag 1.jpg';
 import imag2 from '../../assets/images/imag 2.jpg';
-import { TESTIMONIALS } from '../../data/mockTestimonials';
 import OurServices from '../../components/OurServices';
 import '../../styles/home.css';
 
@@ -26,20 +25,16 @@ export default function Home() {
 
     const faqList = [
         {
-            q: "How does LinkSafi work for universities and campus facilities?",
-            a: "LinkSafi connects university procurement officers, estate managers, and hall wardens directly with certified commercial cleaning and decor contractors. You can review background-checked credentials, schedule semester turnover deep cleaning, or book ceremonial stage decorators with transparent contractual quotes."
+            q: "How does SafiLink work for universities and campus facilities?",
+            a: "SafiLink connects university procurement officers, estate managers, and hall wardens directly with certified commercial cleaning contractors. You can review background-checked credentials, schedule semester turnover deep cleaning, and book end-of-event sanitation with transparent contractual quotes."
         },
         {
             q: "How does it help apartment owners and property managers?",
-            a: "For apartment buildings and student hostels, LinkSafi streamlines move-in / move-out turnover cleanings, routine stairway and corridor sanitization, and lobby aesthetic staging. This ensures prompt deposit returns for outgoing tenants and immediate readiness for new occupants."
+            a: "For apartment buildings and student hostels, SafiLink streamlines move-in / move-out turnover cleanings and routine stairway and corridor sanitization. This ensures prompt deposit returns for outgoing tenants and immediate readiness for new occupants."
         },
         {
-            q: "Can we request both cleaning and decoration from one company?",
-            a: "Yes! Many of our partner companies offer combined facility packages ('Both'). For example, you can book an end-to-end service for a university graduation ceremony where the team cleans and polishes the hall beforehand, styles the stage with elegant drapery, and completes post-event sanitation."
-        },
-        {
-            q: "Are the companies on LinkSafi verified and insured?",
-            a: "Every service company listed on LinkSafi undergoes credential verification, including business registration, safety compliance, public liability insurance, and background checks on their operational staff."
+            q: "Are the companies on SafiLink verified and insured?",
+            a: "Every service company listed on SafiLink undergoes credential verification, including business registration, safety compliance, public liability insurance, and background checks on their operational staff."
         },
         {
             q: "What if the service does not meet our required hygiene standard?",
@@ -51,7 +46,7 @@ export default function Home() {
         {
             number: "01",
             title: "Select Your Space & Required Service",
-            desc: "Specify whether you manage a University Campus (lecture halls, student dorms, and labs) or an Apartment Complex (tenant units, common areas, and private hostels). Then choose Cleaning, Decoration, or Both.",
+            desc: "Specify whether you manage a University Campus (lecture halls, student dorms, and labs) or an Apartment Complex (tenant units, common areas, and private hostels). Then choose Cleaning or Both.",
             icon: Sparkles
         },
         {
@@ -78,7 +73,7 @@ export default function Home() {
         {
             icon: ShieldCheck,
             title: "Trusted & Vetted Professionals",
-            desc: "Experienced, background-checked cleaners and decorators who deliver commercial-grade hygiene and aesthetics with full accountability."
+            desc: "Experienced, background-checked cleaners who deliver commercial-grade hygiene with full accountability."
         },
         {
             icon: CalendarCheck,
@@ -117,14 +112,12 @@ export default function Home() {
 
                                 <h1>
                                     Own Your Space's{' '}
-                                    <span className="highlight">Cleanliness</span> &{' '}
-                                    <span className="highlight">Charm</span>.
+                                    <span className="highlight">Cleanliness</span>.
                                 </h1>
 
                                 <p className="hero-lead">
-                                    LinkSafi simplifies finding and hiring verified commercial
-                                    companies responsible for cleanliness activities and
-                                    decoration activities for universities, student halls,
+                                    SafiLink simplifies finding and hiring verified commercial
+                                    cleaning companies for universities, student halls,
                                     and residential apartment complexes.
                                 </p>
 
@@ -141,7 +134,7 @@ export default function Home() {
                                         className="btn-ghost-pill"
                                         onClick={() => navigate('/how-it-works')}
                                     >
-                                        How LinkSafi Works
+                                        How SafiLink Works
                                     </button>
                                 </div>
 
@@ -180,11 +173,11 @@ export default function Home() {
                                 <span>Institutional & Residential Workflow</span>
                             </div>
 
-                            <h2>How LinkSafi Works</h2>
+                            <h2>How SafiLink Works</h2>
 
                             <p className="how-subtitle">
                                 We&apos;ve eliminated procurement friction so universities and apartment managers
-                                can book trusted cleanliness and decoration specialists in minutes.
+                                can book trusted cleaning specialists in minutes.
                             </p>
                         </div>
 
@@ -195,7 +188,7 @@ export default function Home() {
                             <div className="how-visual">
                                 <img
                                     src={imag2}
-                                    alt="LinkSafi verified cleaning and decoration professionals"
+                                    alt="SafiLink verified cleaning professionals"
                                 />
 
                                 <div className="how-verified-badge">
@@ -260,7 +253,7 @@ export default function Home() {
                 <section className="why-section">
                     <div className="container">
                         <div className="section-header">
-                            <span className="section-badge">Why LinkSafi</span>
+                            <span className="section-badge">Why SafiLink</span>
                             <h2 className="section-title">Built for Institutional Scale</h2>
                             <p className="section-subtitle">
                                 A specialized platform tailored to commercial scale, student health, and residential peace of mind.
@@ -283,37 +276,6 @@ export default function Home() {
 
 
                 {/* ==========================================================
-                    5. TESTIMONIALS (3 Quote Cards)
-                ========================================================== */}
-                <section className="testimonials-section">
-                    <div className="container">
-                        <div className="section-header">
-                            <span className="section-badge">Testimonials</span>
-                            <h2 className="section-title">Trusted by Facility Leaders</h2>
-                            <p className="section-subtitle">
-                                Hear from university administrators, estate managers, and facilities directors who rely on LinkSafi.
-                            </p>
-                        </div>
-
-                        <div className="testimonials-grid">
-                            {TESTIMONIALS.map(t => (
-                                <div key={t.id} className="testimonial-card">
-                                    <p className="testimonial-text">{t.quote}</p>
-                                    <div className="testimonial-author">
-                                        <div className="testimonial-avatar">{t.initials}</div>
-                                        <div className="testimonial-info">
-                                            <h4>{t.name}</h4>
-                                            <p>{t.title}, {t.institution}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-
-                {/* ==========================================================
                     6. CTA BANNER (Warm Amber)
                 ========================================================== */}
                 <section className="cta-section">
@@ -323,7 +285,7 @@ export default function Home() {
                                 <h2>Ready to Elevate Your Campus or Building?</h2>
                                 <p>
                                     Join hundreds of university administrators, hostel wardens, and apartment property managers
-                                    who rely on LinkSafi for certified cleaning and decoration.
+                                     who rely on SafiLink for certified cleaning services.
                                 </p>
                                 <button
                                     className="btn-amber-solid"
@@ -349,7 +311,7 @@ export default function Home() {
                             <div className="faq-left-card">
                                 <h3>Frequently Asked Questions</h3>
                                 <p>
-                                    Everything you need to know about booking vetted cleanliness and decoration companies for universities and apartments.
+                                    Everything you need to know about booking vetted cleaning companies for universities and apartments.
                                 </p>
                                 <div>
                                     <button

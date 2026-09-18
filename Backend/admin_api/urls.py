@@ -1,16 +1,21 @@
-from django.urls import path
+from django.urls import path, re_path
 
 from accounts.permissions import IsAdmin
 from companies.views import AdminCompanyActionView
 from reviews.views import AdminReviewActionView
 
 from .views import (
+    AdminAdminCreateView,
+    AdminAdminListView,
+    AdminAuditLogListView,
     AdminCompanyListView,
     AdminCompanyCustomersView,
     AdminCompanyDetailView,
     AdminDashboardStatsView,
     AdminReviewDetailView,
     AdminReviewListView,
+    AdminServiceDetailView,
+    AdminServiceListView,
     AdminServiceRequestDetailView,
     AdminServiceRequestListView,
     AdminUserDetailView,
@@ -32,4 +37,27 @@ urlpatterns = [
     path("admin/reviews/<int:pk>/", AdminReviewDetailView.as_view()),
     path("admin/reviews/<int:pk>/<action>/", AdminReviewActionView.as_view()),
     path("admin/companies/<int:company_id>/customers/", AdminCompanyCustomersView.as_view()),
+    path("admin/services/", AdminServiceListView.as_view()),
+    path("admin/services/<int:pk>/", AdminServiceDetailView.as_view()),
+    path("admin/admins/", AdminAdminListView.as_view()),
+    path("admin/admins/invite/", AdminAdminCreateView.as_view()),
+    path("admin/audit-log/", AdminAuditLogListView.as_view()),
+    re_path(r"^admin/dashboard/?$", AdminDashboardStatsView.as_view()),
+    re_path(r"^admin/users/?$", AdminUserListView.as_view()),
+    re_path(r"^admin/users/(?P<pk>\d+)/?$", AdminUserDetailView.as_view()),
+    re_path(r"^admin/users/(?P<pk>\d+)/requests/?$", AdminUserRequestsView.as_view()),
+    re_path(r"^admin/companies/?$", AdminCompanyListView.as_view()),
+    re_path(r"^admin/companies/(?P<pk>\d+)/?$", AdminCompanyDetailView.as_view()),
+    re_path(r"^admin/companies/(?P<pk>\d+)/(?P<action>[^/]+)/?$", AdminCompanyActionView.as_view()),
+    re_path(r"^admin/requests/?$", AdminServiceRequestListView.as_view()),
+    re_path(r"^admin/requests/(?P<pk>\d+)/?$", AdminServiceRequestDetailView.as_view()),
+    re_path(r"^admin/reviews/?$", AdminReviewListView.as_view()),
+    re_path(r"^admin/reviews/(?P<pk>\d+)/?$", AdminReviewDetailView.as_view()),
+    re_path(r"^admin/reviews/(?P<pk>\d+)/(?P<action>[^/]+)/?$", AdminReviewActionView.as_view()),
+    re_path(r"^admin/companies/(?P<company_id>\d+)/customers/?$", AdminCompanyCustomersView.as_view()),
+    re_path(r"^admin/services/?$", AdminServiceListView.as_view()),
+    re_path(r"^admin/services/(?P<pk>\d+)/?$", AdminServiceDetailView.as_view()),
+    re_path(r"^admin/admins/?$", AdminAdminListView.as_view()),
+    re_path(r"^admin/admins/invite/?$", AdminAdminCreateView.as_view()),
+    re_path(r"^admin/audit-log/?$", AdminAuditLogListView.as_view()),
 ]

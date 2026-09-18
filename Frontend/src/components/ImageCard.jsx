@@ -32,8 +32,7 @@ export default function ImageCard({
                 )}
                 <div className="ls-image-card-tag">
                     {variant === 'cleaning' && 'Cleaning'}
-                    {variant === 'decoration' && 'Decoration'}
-                    {variant === 'both' && 'Cleaning + Decoration'}
+                    {variant === 'both' && 'Combined Services'}
                     {variant === 'university' && 'Universities'}
                     {variant === 'apartment' && 'Apartments'}
                     {variant === 'how' && 'Process'}

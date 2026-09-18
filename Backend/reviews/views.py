@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -9,16 +9,16 @@ from accounts.permissions import IsAdmin, IsOrganization
 from companies.models import Company
 
 from .models import Review
-from .serializers import ReviewSerializer
+from .serializers import ReviewPublicSerializer, ReviewSerializer
 
 
 class ReviewListCreateView(generics.ListCreateAPIView):
     serializer_class = ReviewSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     def get_queryset(self):
         qs = Review.objects.select_related("company", "customer").filter(
-            status=Review.STATUS_VISIBLE,
+            status__in=[Review.STATUS_PUBLISHED, "visible"],
             company__status=Company.STATUS_APPROVED,
             company__is_active=True,
         )
@@ -35,14 +35,11 @@ class ReviewListCreateView(generics.ListCreateAPIView):
             )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        company_id = serializer.validated_data.get("company_id")
-        company = get_object_or_404(Company, pk=company_id)
-        if not (company.status == Company.STATUS_APPROVED and company.is_active):
-            return Response(
-                {"detail": "Can only review approved and active companies."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        review = serializer.save(customer=request.user, company=company)
+        review = serializer.save(
+            customer=request.user,
+            status=Review.STATUS_PENDING,
+            is_featured=False,
+        )
         return Response(ReviewSerializer(review).data, status=status.HTTP_201_CREATED)
 
 
@@ -50,11 +47,13 @@ class CompanyReviewsView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, company_id):
-        qs = Review.objects.select_related("customer").filter(
+        qs = Review.objects.select_related("customer", "company").filter(
             company_id=company_id,
-            status=Review.STATUS_VISIBLE,
-        )
-        serializer = ReviewSerializer(qs, many=True)
+            status__in=[Review.STATUS_PUBLISHED, "visible"],
+            company__status=Company.STATUS_APPROVED,
+            company__is_active=True,
+        ).order_by("-created_at")
+        serializer = ReviewPublicSerializer(qs, many=True)
         return Response(serializer.data)
 
 
@@ -64,12 +63,30 @@ class CompanyRatingView(APIView):
     def get(self, request, company_id):
         agg = Review.objects.filter(
             company_id=company_id,
-            status=Review.STATUS_VISIBLE,
+            status__in=[Review.STATUS_PUBLISHED, "visible"],
+            company__status=Company.STATUS_APPROVED,
+            company__is_active=True,
         ).aggregate(avg=Avg("rating"), count=Count("id"))
+        count = agg["count"] or 0
+        avg = round(float(agg["avg"]), 1) if count > 0 and agg["avg"] is not None else None
         return Response({
-            "average": round(agg["avg"] or 0, 1),
-            "count": agg["count"] or 0,
+            "average": avg,
+            "count": count,
         })
+
+
+class FeaturedReviewsView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        qs = Review.objects.select_related("customer", "company").filter(
+            status__in=[Review.STATUS_PUBLISHED, "visible"],
+            is_featured=True,
+            company__status=Company.STATUS_APPROVED,
+            company__is_active=True,
+        ).order_by("-created_at")[:6]
+        serializer = ReviewPublicSerializer(qs, many=True)
+        return Response(serializer.data)
 
 
 class AdminReviewListView(generics.ListAPIView):
@@ -84,9 +101,20 @@ class AdminReviewListView(generics.ListAPIView):
         if company_id:
             qs = qs.filter(company_id=company_id)
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            if status_filter == "published":
+                qs = qs.filter(status__in=[Review.STATUS_PUBLISHED, "visible"])
+            elif status_filter == "pending":
+                qs = qs.filter(status__in=[Review.STATUS_PENDING, "hidden"])
+            elif status_filter == "rejected":
+                qs = qs.filter(status__in=[Review.STATUS_REJECTED, "removed"])
+            else:
+                qs = qs.filter(status=status_filter)
         if search:
-            qs = qs.filter(comment__icontains=search)
+            qs = qs.filter(
+                Q(comment__icontains=search)
+                | Q(customer__name__icontains=search)
+                | Q(company__name__icontains=search)
+            )
         return qs.order_by("-created_at")
 
 
@@ -95,12 +123,26 @@ class AdminReviewActionView(APIView):
 
     def post(self, request, pk, action):
         review = get_object_or_404(Review, pk=pk)
-        if action == "hide":
-            review.status = Review.STATUS_HIDDEN
+        if action in ("approve", "publish", "restore"):
+            review.status = Review.STATUS_PUBLISHED
+        elif action == "reject":
+            review.status = Review.STATUS_REJECTED
+        elif action in ("unpublish", "hide"):
+            review.status = Review.STATUS_PENDING
         elif action == "remove":
             review.status = Review.STATUS_REMOVED
-        elif action == "restore":
-            review.status = Review.STATUS_VISIBLE
+        elif action in ("feature", "unfeature", "toggle_feature"):
+            if review.status != Review.STATUS_PUBLISHED:
+                return Response(
+                    {"detail": "Only published reviews can be featured."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if action == "feature":
+                review.is_featured = True
+            elif action == "unfeature":
+                review.is_featured = False
+            else:
+                review.is_featured = not review.is_featured
         else:
             return Response(
                 {"detail": f"Unknown action: {action}"},

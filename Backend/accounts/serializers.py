@@ -25,6 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
             "name",
             "role",
             "phone",
+            "organization_type",
             "is_staff",
             "is_superuser",
             "admin_role",
@@ -45,11 +46,21 @@ class RegisterSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=120)
     role = serializers.ChoiceField(choices=User.ROLE_CHOICES)
     phone = serializers.CharField(max_length=32, required=False, allow_blank=True)
+    organization_type = serializers.ChoiceField(
+        choices=User.ORG_TYPE_CHOICES, required=False, allow_blank=True
+    )
 
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("Email is already registered.")
         return value.lower()
+
+    def validate(self, attrs):
+        if attrs.get("role") == User.ROLE_ORGANIZATION and not attrs.get("organization_type"):
+            raise serializers.ValidationError(
+                {"organization_type": "Select whether you're a university or an apartment."}
+            )
+        return attrs
 
     def create(self, validated_data):
         password = validated_data.pop("password")

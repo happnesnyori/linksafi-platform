@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Building2,
     Users,
     FileText,
+    Settings,
     Sparkles,
     LogOut,
     X,
     ChevronRight,
     ChevronDown,
-    Star,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -30,7 +30,7 @@ const companiesSubItems = [
     { path: '/admin/companies', label: 'All Companies' },
     { path: '/admin/companies/pending', label: 'Pending Approvals' },
     { path: '/admin/companies/approved', label: 'Approved Companies' },
-    { path: '/admin/companies/add', label: 'Add Company' },
+    { path: '/admin/companies/new', label: 'Add Company' },
 ];
 
 const mainNavItems = [
@@ -41,9 +41,9 @@ const mainNavItems = [
         icon: Building2,
         children: companiesSubItems,
     },
-    { path: '/admin/customers', label: 'Customers', icon: Users },
+    { path: '/admin/organizations', label: 'Organizations', icon: Users },
     { path: '/admin/requests', label: 'Service Requests', icon: FileText },
-    { path: '/admin/reviews', label: 'Reviews', icon: Star },
+    { path: '/admin/settings', label: 'Platform Settings', icon: Settings },
 ];
 
 const AdminSidebar = ({ pendingCount = 0, mobileOpen = false, onMobileClose }) => {
@@ -51,6 +51,12 @@ const AdminSidebar = ({ pendingCount = 0, mobileOpen = false, onMobileClose }) =
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const [openGroups, setOpenGroups] = useState({ 'companies-group': true });
+
+    useEffect(() => {
+        if (location.pathname.startsWith('/admin/companies')) {
+            setOpenGroups((prev) => ({ ...prev, 'companies-group': true }));
+        }
+    }, [location.pathname]);
 
     const handleLogout = () => {
         logout();
@@ -142,8 +148,8 @@ const AdminSidebar = ({ pendingCount = 0, mobileOpen = false, onMobileClose }) =
                         <Sparkles size={20} />
                     </div>
                     <div className="admin-logo-text">
-                        <span>Link</span>
                         <span>Safi</span>
+                        <span>Link</span>
                         <small>Admin Panel</small>
                     </div>
                 </Link>

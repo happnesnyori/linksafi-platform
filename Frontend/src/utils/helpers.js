@@ -1,131 +1,116 @@
-export const ROLE = {
-    ORGANIZATION: 'organization',
-    COMPANY: 'company',
+export const ROLE = Object.freeze({
     ADMIN: 'admin',
-};
-
-export const SERVICE_TYPE = {
-    CLEANING: 'cleaning',
-    DECORATION: 'decoration',
-};
-
-export const SERVICE_LABELS = {
-    [SERVICE_TYPE.CLEANING]: 'Cleaning',
-    [SERVICE_TYPE.DECORATION]: 'Decoration',
-};
+    COMPANY: 'company',
+    ORGANIZATION: 'organization',
+});
 
 export const SERVICE_FILTERS = [
-    { key: 'all', label: 'All' },
-    { key: 'cleaning', label: 'Cleaning' },
-    { key: 'decoration', label: 'Decoration' },
-    { key: 'both', label: 'Both' },
+    { value: '', label: 'All Services' },
+    { value: 'cleaning', label: 'Cleaning' },
+    { value: 'decoration', label: 'Decoration' },
+    { value: 'both', label: 'Cleaning + Decoration' },
 ];
 
-export const REQUEST_SERVICE_OPTIONS = [
-    { key: 'cleaning', label: 'Cleaning' },
-    { key: 'decoration', label: 'Decoration' },
-    { key: 'both', label: 'Both' },
-];
+export const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
 
-export const REQUEST_STATUS = {
-    PENDING: 'pending',
-    ACCEPTED: 'accepted',
-    REJECTED: 'rejected',
+    const apiBase = (import.meta.env?.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api')
+        .replace(/\/$/, '');
+    return `${apiBase.replace(/\/api\/?$/, '')}/${url.replace(/^\//, '')}`;
 };
 
-export const REQUEST_STATUS_LABELS = {
-    [REQUEST_STATUS.PENDING]: 'Pending',
-    [REQUEST_STATUS.ACCEPTED]: 'Accepted',
-    [REQUEST_STATUS.REJECTED]: 'Rejected',
-};
+export const formatDate = (value) => {
+    if (!value) return '';
 
-export const getServiceLabel = (serviceKey) => {
-    if (Array.isArray(serviceKey)) {
-        const labels = serviceKey.map((s) => SERVICE_LABELS[s] || s);
-        return labels.join(' & ');
-    }
-    if (serviceKey === 'both') {
-        return 'Cleaning & Decoration';
-    }
-    return SERVICE_LABELS[serviceKey] || serviceKey;
-};
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
 
-export const formatService = (serviceKey) => {
-    if (serviceKey === 'both') {
-        return 'Cleaning & Decoration';
-    }
-    return SERVICE_LABELS[serviceKey] || serviceKey;
-};
-
-// Derive a short city/area string from a company's full location.
-// e.g. "Dar es Salaam (UDSM, Ardhi, IFM zones)" -> "Dar es Salaam"
-export const getCompanyCity = (company) => {
-    if (company?.city) return company.city;
-    const location = company?.location;
-    if (!location) return '';
-    return String(location).split('(')[0].split('&')[0].split(',')[0].trim();
-};
-
-// Return the full detailed location (all zones/branches).
-export const getCompanyFullLocation = (company) => {
-    if (company?.fullLocation) return company.fullLocation;
-    return company?.location || '';
-};
-
-// Primary service tag/category as a single label.
-export const getCompanyTag = (company) => {
-    if (company?.tag) return company.tag;
-    const services = company?.services;
-    if (Array.isArray(services) && services.length) {
-        return services.includes('both') ? 'Cleaning & Decoration' : formatService(services[0]);
-    }
-    if (company?.service) {
-        return formatService(company.service);
-    }
-    return 'Service Provider';
-};
-
-// Bulleted capabilities list.
-export const getCompanyCapabilities = (company) => {
-    if (Array.isArray(company?.capabilities)) return company.capabilities;
-    if (Array.isArray(company?.specialties)) return company.specialties;
-    return [];
-};
-
-// Normalize any company shape (mock or API) into the listing data contract.
-export const normalizeCompany = (company) => {
-    if (!company) return null;
-    return {
-        ...company,
-        city: getCompanyCity(company),
-        fullLocation: getCompanyFullLocation(company),
-        tag: getCompanyTag(company),
-        capabilities: getCompanyCapabilities(company),
-        rating: company.rating ?? 4.9,
-        reviewCount: company.reviewsCount ?? company.reviewCount ?? 0,
-        verified: company.verified !== false,
-        turnaroundTime: company.turnoverSpeed || company.turnaroundTime || '24-48 hours',
-        thumbnailUrl: company.logo || company.thumbnailUrl || company.thumbnail,
-    };
-};
-
-export const formatDate = (dateString) => {
-    if (!dateString) return '—';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return '—';
-    return date.toLocaleDateString('en-US', {
+    return new Intl.DateTimeFormat('en', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
-    });
+    }).format(date);
 };
 
-export const getInitials = (name) => {
-    if (!name) return '?';
-    return name
-        .split(' ')
-        .map((word) => word.charAt(0))
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+export const formatService = (service) => {
+    if (!service) return '';
+    if (typeof service === 'object') return service.name || service.service?.name || '';
+
+    const labels = {
+        cleaning: 'Cleaning',
+        decoration: 'Decoration',
+        both: 'Cleaning + Decoration',
+    };
+    return labels[service] || service
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+export const getCompanyTag = (company) => {
+    const serviceItems = Array.isArray(company?.service_items) ? company.service_items : [];
+    if (serviceItems.length) return formatService(serviceItems[0]);
+
+    const services = Array.isArray(company?.services) ? company.services : [];
+    return services.length ? formatService(services[0]) : '';
+};
+
+export const getCompanyCapabilities = (company) => {
+    const specialties = Array.isArray(company?.specialties) ? company.specialties : [];
+    if (specialties.length) return specialties;
+
+    const serviceItems = Array.isArray(company?.service_items) ? company.service_items : [];
+    return serviceItems.map((service) => formatService(service)).filter(Boolean);
+};
+
+export const getCompanyCity = (location = '') => {
+    if (!location) return '';
+    const parts = location.split(',');
+    return parts[0].trim();
+};
+
+export const downloadCsv = (filename, rows) => {
+    if (!rows || rows.length === 0) return;
+
+    const headers = Object.keys(rows[0]);
+    const escape = (value) => {
+        const str = String(value ?? '');
+        return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const lines = [headers.join(',')].concat(
+        rows.map((row) => headers.map((header) => escape(row[header])).join(','))
+    );
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
+export const normalizeCompany = (company = {}) => {
+    const serviceItems = Array.isArray(company.service_items) ? company.service_items : [];
+    const services = Array.isArray(company.services) ? company.services : [];
+    const ratingValue = company.rating ?? company.average_rating ?? null;
+    const reviewCount = company.reviews_count ?? company.review_count ?? 0;
+
+    return {
+        ...company,
+        logoUrl: getMediaUrl(company.logo),
+        coverImageUrl: getMediaUrl(company.cover_image),
+        thumbnailUrl: getMediaUrl(company.logo || company.thumbnail),
+        rating: ratingValue === null || ratingValue === undefined ? null : Number(ratingValue),
+        reviewCount: Number(reviewCount || 0),
+        verified: company.verification_status === 'verified' || company.verified === true,
+        serviceItems,
+        services,
+        tag: getCompanyTag(company),
+        capabilities: getCompanyCapabilities(company),
+        city: getCompanyCity(company.location),
+    };
 };

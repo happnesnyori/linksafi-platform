@@ -4,7 +4,7 @@ import { X, Upload } from 'lucide-react';
 export const SERVICE_OPTIONS = [
     { value: 'cleaning', label: 'Cleaning' },
     { value: 'decoration', label: 'Decoration' },
-    { value: 'both', label: 'Cleaning + Decoration' },
+    { value: 'both', label: 'Combined Services' },
 ];
 
 const STATUS_OPTIONS = [

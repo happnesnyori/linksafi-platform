@@ -105,6 +105,13 @@ export const adminService = {
         return response;
     },
 
+    deleteCompany: async (id) => {
+        const response = await api(`/admin/companies/${id}/`, {
+            method: 'DELETE',
+        });
+        return response;
+    },
+
     // Customers (users)
     getCustomers: async (filters = {}, page = 1, pageSize = 10) => {
         const params = new URLSearchParams();
@@ -188,6 +195,34 @@ export const adminService = {
         const response = await api(`/admin/reviews/${id}/`, {
             method: 'PATCH',
             body: data,
+        });
+        return response;
+    },
+
+    approveReview: async (id) => {
+        const response = await api(`/admin/reviews/${id}/approve/`, {
+            method: 'POST',
+        });
+        return response;
+    },
+
+    rejectReview: async (id) => {
+        const response = await api(`/admin/reviews/${id}/reject/`, {
+            method: 'POST',
+        });
+        return response;
+    },
+
+    unpublishReview: async (id) => {
+        const response = await api(`/admin/reviews/${id}/unpublish/`, {
+            method: 'POST',
+        });
+        return response;
+    },
+
+    toggleFeaturedReview: async (id) => {
+        const response = await api(`/admin/reviews/${id}/toggle_feature/`, {
+            method: 'POST',
         });
         return response;
     },
