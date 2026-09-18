@@ -145,3 +145,29 @@ class GalleryImage(models.Model):
 
     def __str__(self):
         return self.title or f"Gallery image {self.id}"
+
+
+class CompanyFavorite(models.Model):
+    organization = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="favorite_companies",
+    )
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name="favorited_by",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        constraints = (
+            models.UniqueConstraint(
+                fields=("organization", "company"),
+                name="unique_organization_favorite",
+            ),
+        )
+
+    def __str__(self):
+        return f"{self.organization_id} ♥ {self.company_id}"

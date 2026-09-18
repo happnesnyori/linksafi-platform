@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
 
-from .models import Company, CompanyService, GalleryImage, Service
+from .models import Company, CompanyFavorite, CompanyService, GalleryImage, Service
 
 
 def parse_json_form_fields(data):
@@ -239,3 +239,20 @@ class CompanyAdminSerializer(serializers.ModelSerializer):
         validated_data["status"] = Company.STATUS_APPROVED
         validated_data["is_active"] = True
         return super().create(validated_data)
+
+
+class CompanyFavoriteSerializer(serializers.ModelSerializer):
+    company = CompanySerializer(read_only=True)
+    company_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = CompanyFavorite
+        fields = ("id", "company", "company_id", "created_at")
+        read_only_fields = ("id", "company", "created_at")
+
+    def validate_company_id(self, value):
+        if not Company.objects.filter(
+            pk=value, status=Company.STATUS_APPROVED, is_active=True
+        ).exists():
+            raise serializers.ValidationError("Company not found.")
+        return value

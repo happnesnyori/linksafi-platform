@@ -6,6 +6,8 @@ from .views import (
     CompanyGalleryView,
     CompanyListCreateView,
     CompanyServicesView,
+    FavoriteDeleteView,
+    FavoriteListCreateView,
     MyCompanyView,
     ServiceListView,
 )
@@ -20,6 +22,8 @@ urlpatterns = [
     path("companies/<int:pk>/services/", CompanyServicesView.as_view()),
     path("companies/<int:pk>/gallery/", CompanyGalleryView.as_view()),
     path("companies/gallery/<int:pk>/", CompanyGalleryDetailView.as_view()),
+    path("favorites/", FavoriteListCreateView.as_view()),
+    path("favorites/<int:company_id>/", FavoriteDeleteView.as_view()),
     re_path(r"^services/?$", ServiceListView.as_view()),
     re_path(r"^companies/?$", CompanyListCreateView.as_view()),
     re_path(r"^companies/me/?$", MyCompanyView.as_view()),
@@ -29,4 +33,6 @@ urlpatterns = [
     re_path(r"^companies/(?P<pk>\d+)/services/?$", CompanyServicesView.as_view()),
     re_path(r"^companies/(?P<pk>\d+)/gallery/?$", CompanyGalleryView.as_view()),
     re_path(r"^companies/gallery/(?P<pk>\d+)/?$", CompanyGalleryDetailView.as_view()),
+    re_path(r"^favorites/?$", FavoriteListCreateView.as_view()),
+    re_path(r"^favorites/(?P<company_id>\d+)/?$", FavoriteDeleteView.as_view()),
 ]

@@ -93,6 +93,29 @@ export const downloadCsv = (filename, rows) => {
     URL.revokeObjectURL(url);
 };
 
+export const getCompanyBadge = (company = {}) => {
+    const services = Array.isArray(company.services) ? company.services : [];
+    if (services.includes('both')) {
+        return { label: 'Full Service', tone: 'full-service' };
+    }
+
+    const rating = company.rating ?? company.average_rating;
+    const reviewsCount = Number(company.reviews_count ?? company.review_count ?? 0);
+    if (rating !== null && rating !== undefined && Number(rating) >= 4.5 && reviewsCount >= 1) {
+        return { label: 'Top Rated', tone: 'top-rated' };
+    }
+
+    if (company.created_at) {
+        const created = new Date(company.created_at);
+        const ageInDays = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
+        if (ageInDays >= 0 && ageInDays <= 30) {
+            return { label: 'New', tone: 'new' };
+        }
+    }
+
+    return null;
+};
+
 export const normalizeCompany = (company = {}) => {
     const serviceItems = Array.isArray(company.service_items) ? company.service_items : [];
     const services = Array.isArray(company.services) ? company.services : [];

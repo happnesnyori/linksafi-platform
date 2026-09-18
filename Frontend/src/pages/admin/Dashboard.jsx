@@ -5,6 +5,10 @@ import {
     Users,
     FileText,
     Clock,
+    CheckCircle2,
+    Sparkles,
+    PaintBucket,
+    Layers,
     AlertCircle,
     Eye,
     ArrowUpRight,
@@ -94,18 +98,46 @@ export default function AdminDashboard() {
                     subtitle="Awaiting review"
                 />
                 <StatCard
-                    title="Active Customers"
+                    title="Approved Companies"
+                    value={stats.approved_companies}
+                    icon={CheckCircle2}
+                    tone="teal"
+                    subtitle="Live on SafiLink"
+                />
+                <StatCard
+                    title="Total Organizations"
                     value={stats.total_organizations}
                     icon={Users}
                     tone="blue"
-                    subtitle="Organizations on SafiLink"
+                    subtitle="Registered clients"
                 />
                 <StatCard
-                    title="Open Service Requests"
-                    value={stats.pending_requests}
+                    title="Total Requests"
+                    value={stats.total_service_requests}
                     icon={FileText}
                     tone="navy"
-                    subtitle="Awaiting company response"
+                    subtitle={`${stats.pending_requests} awaiting response`}
+                />
+                <StatCard
+                    title="Cleaning Companies"
+                    value={stats.cleaning_companies}
+                    icon={Sparkles}
+                    tone="teal"
+                    subtitle="Cleaning only"
+                />
+                <StatCard
+                    title="Decoration Companies"
+                    value={stats.decoration_companies}
+                    icon={PaintBucket}
+                    tone="orange"
+                    subtitle="Decoration only"
+                />
+                <StatCard
+                    title="Both"
+                    value={stats.both_companies}
+                    icon={Layers}
+                    tone="blue"
+                    subtitle="Cleaning + Decoration"
                 />
             </div>
 
@@ -131,7 +163,7 @@ export default function AdminDashboard() {
                         <span className="admin-section-eyebrow">Needs attention</span>
                         <h2>Pending approvals</h2>
                     </div>
-                    <button className="admin-text-button" onClick={() => navigate('/admin/companies?status=pending')}>
+                    <button className="admin-text-button" onClick={() => navigate('/admin/companies/pending')}>
                         View all <ArrowUpRight size={16} />
                     </button>
                 </div>
@@ -163,7 +195,7 @@ export default function AdminDashboard() {
                                     <td>{company.location || 'Not provided'}</td>
                                     <td>{company.created_at ? new Date(company.created_at).toLocaleDateString() : 'Recently'}</td>
                                     <td><span className="admin-status-badge admin-badge-pending">Pending</span></td>
-                                    <td><button className="admin-icon-button" onClick={() => navigate(`/admin/companies/${company.id}`)} aria-label={`View ${company.name}`}><Eye size={16} /></button></td>
+                                    <td><button className="admin-icon-button" onClick={() => navigate('/admin/companies/pending')} aria-label={`View ${company.name}`}><Eye size={16} /></button></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -174,7 +206,7 @@ export default function AdminDashboard() {
             <div className="admin-dashboard-links">
                 <button onClick={() => navigate('/admin/requests?status=pending')}><AlertCircle size={18} /><span>Review pending requests</span><ArrowUpRight size={15} /></button>
                 <button onClick={() => navigate('/admin/companies')}><Building2 size={18} /><span>Manage all companies</span><ArrowUpRight size={15} /></button>
-                <button onClick={() => navigate('/admin/customers')}><Users size={18} /><span>View customer directory</span><ArrowUpRight size={15} /></button>
+                <button onClick={() => navigate('/admin/organizations')}><Users size={18} /><span>View organizations directory</span><ArrowUpRight size={15} /></button>
             </div>
         </div>
     );

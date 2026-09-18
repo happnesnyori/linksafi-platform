@@ -11,7 +11,7 @@ import Login from './pages/public/Login';
 import Register from './pages/public/Register';
 import PublicRequestService from './pages/public/PublicRequestService';
 import OrganizationDashboard from './pages/organization/Dashboard';
-import FindCompanies from './pages/organization/FindCompanies';
+import Marketplace from './pages/organization/Marketplace';
 import MyRequests from './pages/organization/MyRequests';
 import OrganizationRequestDetails from './pages/organization/RequestDetails';
 import OrganizationProfile from './pages/organization/Profile';
@@ -23,11 +23,16 @@ import CompanyRequestDetails from './pages/company/RequestDetails';
 import ManageServices from './pages/company/Services';
 import CompanyProfile from './pages/company/Profile';
 import CompanyGallery from './pages/company/Gallery';
+import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminCompanies from './pages/admin/Companies';
-import AdminCustomers from './pages/admin/Customers';
+import AdminCompaniesPending from './pages/admin/CompaniesPending';
+import AdminCompaniesApproved from './pages/admin/CompaniesApproved';
+import AdminCompanyAddForm from './pages/admin/CompanyAddForm';
+import AdminOrganizations from './pages/admin/Organizations';
 import AdminRequests from './pages/admin/Requests';
 import AdminReviews from './pages/admin/Reviews';
+import AdminSettings from './pages/admin/Settings';
 import PublicLayout from './layouts/PublicLayout';
 import AdminLayout from './layouts/AdminLayout';
 import Loading from './components/Loading';
@@ -54,9 +59,11 @@ function App() {
                 <Route path="/request-service/:companyId" element={<PublicRequestService />} />
                 <Route path="/login" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/overview' : '/dashboard'} /> : <Login />} />
                 <Route path="/register" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/overview' : '/dashboard'} /> : <Register />} />
+                <Route path="/admin/login" element={isAuthenticated && isAdmin ? <Navigate to="/admin" /> : <AdminLogin />} />
 
                 <Route path="/dashboard" element={<ProtectedRoute><RoleRoute allowedRoles={['organization']}><OrganizationDashboard /></RoleRoute></ProtectedRoute>} />
-                <Route path="/find-companies" element={<ProtectedRoute><RoleRoute allowedRoles={['organization']}><FindCompanies /></RoleRoute></ProtectedRoute>} />
+                <Route path="/organization/browse" element={<ProtectedRoute><RoleRoute allowedRoles={['organization']}><Marketplace /></RoleRoute></ProtectedRoute>} />
+                <Route path="/find-companies" element={<Navigate to="/organization/browse" replace />} />
                 <Route path="/requests" element={<ProtectedRoute><RoleRoute allowedRoles={['organization']}><MyRequests /></RoleRoute></ProtectedRoute>} />
                 <Route path="/requests/:requestId" element={<ProtectedRoute><RoleRoute allowedRoles={['organization']}><OrganizationRequestDetails /></RoleRoute></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><RoleRoute allowedRoles={['organization']}><OrganizationProfile /></RoleRoute></ProtectedRoute>} />
@@ -74,12 +81,15 @@ function App() {
                 <Route path="/admin" element={<ProtectedRoute><RoleRoute allowedRoles={['admin']}><AdminLayout /></RoleRoute></ProtectedRoute>}>
                     <Route index element={<AdminDashboard />} />
                     <Route path="companies" element={<AdminCompanies />} />
-                    <Route path="companies/pending" element={<Navigate to="/admin/companies?status=pending" replace />} />
-                    <Route path="companies/approved" element={<Navigate to="/admin/companies?status=approved" replace />} />
-                    <Route path="companies/add" element={<Navigate to="/admin/companies?create=true" replace />} />
-                    <Route path="customers" element={<AdminCustomers />} />
+                    <Route path="companies/pending" element={<AdminCompaniesPending />} />
+                    <Route path="companies/approved" element={<AdminCompaniesApproved />} />
+                    <Route path="companies/new" element={<AdminCompanyAddForm />} />
+                    <Route path="companies/add" element={<Navigate to="/admin/companies/new" replace />} />
+                    <Route path="organizations" element={<AdminOrganizations />} />
+                    <Route path="customers" element={<Navigate to="/admin/organizations" replace />} />
                     <Route path="requests" element={<AdminRequests />} />
                     <Route path="reviews" element={<AdminReviews />} />
+                    <Route path="settings" element={<AdminSettings />} />
                 </Route>
 
                 <Route path="*" element={<PublicLayout><div className="page-container" style={{ textAlign: 'center', padding: '100px 20px' }}><h1 className="page-title">404 - Page Not Found</h1><p className="page-subtitle">The page you're looking for doesn't exist</p><a href="/" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>← Back to Home</a></div></PublicLayout>} />

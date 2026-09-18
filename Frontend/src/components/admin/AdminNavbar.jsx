@@ -32,7 +32,7 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/admin/login');
     };
 
     const handleProfileUpdate = () => {
@@ -41,17 +41,22 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
     };
 
     const adminName = user?.name || user?.email || 'Admin';
-    const pageTitle = location.pathname === '/admin'
-        ? 'Dashboard'
-        : location.pathname.includes('/companies')
-            ? 'Companies'
-            : location.pathname.includes('/customers')
-                ? 'Customers'
-                : location.pathname.includes('/requests')
-                    ? 'Service Requests'
-                    : location.pathname.includes('/reviews')
-                        ? 'Reviews'
-                        : 'Admin workspace';
+
+    const getBreadcrumb = (pathname) => {
+        if (pathname === '/admin') return { section: null, title: 'Dashboard' };
+        if (pathname === '/admin/companies/pending') return { section: 'Companies', title: 'Pending Approvals' };
+        if (pathname === '/admin/companies/approved') return { section: 'Companies', title: 'Approved Companies' };
+        if (pathname === '/admin/companies/new') return { section: 'Companies', title: 'Add Company' };
+        if (pathname.startsWith('/admin/companies')) return { section: 'Companies', title: 'All Companies' };
+        if (pathname.startsWith('/admin/organizations')) return { section: null, title: 'Organizations' };
+        if (pathname.startsWith('/admin/requests')) return { section: null, title: 'Service Requests' };
+        if (pathname.startsWith('/admin/settings')) return { section: null, title: 'Platform Settings' };
+        if (pathname.startsWith('/admin/reviews')) return { section: null, title: 'Reviews' };
+        return { section: null, title: 'Admin workspace' };
+    };
+
+    const { section, title: pageTitle } = getBreadcrumb(location.pathname);
+    const breadcrumbText = ['SafiLink', 'Admin', section, pageTitle].filter(Boolean).join(' / ');
 
     return (
         <header className="admin-navbar">
@@ -75,7 +80,7 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
                 </Link>
 
                 <div className="admin-navbar-heading">
-                    <span className="admin-navbar-kicker">SafiLink / Admin</span>
+                    <span className="admin-navbar-kicker">{breadcrumbText}</span>
                     <strong>{pageTitle}</strong>
                 </div>
                 <form

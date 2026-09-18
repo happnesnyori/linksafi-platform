@@ -144,6 +144,13 @@ export const adminService = {
         return response;
     },
 
+    deleteCustomer: async (id) => {
+        const response = await api(`/admin/users/${id}/`, {
+            method: 'DELETE',
+        });
+        return response;
+    },
+
     // Service Requests
     getRequests: async (filters = {}, page = 1, pageSize = 10) => {
         const params = new URLSearchParams();
@@ -293,6 +300,26 @@ export const adminService = {
             method: 'DELETE',
         });
         return response;
+    },
+
+    // Admin accounts (invite-only)
+    getAdmins: async () => {
+        const response = await api('/admin/admins/');
+        return response.results || response || [];
+    },
+
+    inviteAdmin: async (data) => {
+        const response = await api('/admin/admins/invite/', {
+            method: 'POST',
+            body: data,
+        });
+        return response;
+    },
+
+    // Audit log
+    getAuditLog: async (filters = {}) => {
+        const response = await api(`/admin/audit-log/${buildQuery(filters)}`);
+        return response.results || response || [];
     },
 };
 

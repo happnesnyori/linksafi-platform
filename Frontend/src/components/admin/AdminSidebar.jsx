@@ -60,7 +60,7 @@ const AdminSidebar = ({ pendingCount = 0, mobileOpen = false, onMobileClose }) =
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/admin/login');
     };
 
     const toggleGroup = (key) => {

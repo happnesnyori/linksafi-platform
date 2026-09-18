@@ -3,17 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
     BadgeCheck,
+    CheckCircle2,
     MapPin,
     Phone,
     Mail,
     Star,
     Clock,
-    Sparkles,
     Images,
     MessageCircle,
     CalendarDays,
+    Droplets,
+    PartyPopper,
+    X,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from './Toast';
 import { getCompanyReviews } from '../services/companyService';
+import { requestService } from '../services/requestService';
 import { formatService, getMediaUrl } from '../utils/helpers';
 import '../styles/companyProfile.css';
 
@@ -24,8 +30,15 @@ const tabs = [
     { id: 'reviews', label: 'Reviews' },
 ];
 
+const PROPERTY_TYPES = [
+    { value: 'university', label: 'University' },
+    { value: 'apartment', label: 'Apartment Property' },
+    { value: 'office', label: 'Office' },
+    { value: 'event', label: 'Event Venue' },
+];
+
 const StarRating = ({ rating }) => (
-    <span className="profile-star-rating" aria-label={`${rating} out of 5 stars`}>
+    <span className="cpp-star-rating" aria-label={`${rating} out of 5 stars`}>
         {Array.from({ length: 5 }, (_, index) => (
             <Star
                 key={index}
@@ -39,9 +52,17 @@ const StarRating = ({ rating }) => (
 
 export default function CompanyProfile({ company }) {
     const navigate = useNavigate();
+    const { isAuthenticated, role } = useAuth();
+    const { addToast } = useToast();
+    const [view, setView] = useState('profile');
     const [activeTab, setActiveTab] = useState('overview');
     const [reviews, setReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [contactOpen, setContactOpen] = useState(false);
+
+    const [requestForm, setRequestForm] = useState({ service: '', property_type: '', description: '' });
+    const [requestSubmitting, setRequestSubmitting] = useState(false);
+    const [requestError, setRequestError] = useState('');
 
     useEffect(() => {
         if (!company?.id) return;
@@ -71,9 +92,9 @@ export default function CompanyProfile({ company }) {
     const serviceAreas = Array.isArray(company.service_areas) ? company.service_areas : [];
     const rating = company.rating ?? company.average_rating;
     const reviewCount = Number(company.reviews_count ?? company.review_count ?? reviews.length);
+    const isApproved = company.status === 'approved';
     const isVerified = company.verification_status === 'verified' || company.verified === true;
     const logoUrl = getMediaUrl(company.logo || company.logoUrl);
-    const coverUrl = getMediaUrl(company.cover_image || company.coverImageUrl);
     const companyServices = serviceItems.length
         ? serviceItems
         : services.map((service) => ({ name: formatService(service), category: service, description: '' }));
@@ -90,171 +111,320 @@ export default function CompanyProfile({ company }) {
     const contactHref = company.email ? `mailto:${company.email}` : null;
     const phoneHref = company.phone ? `tel:${company.phone}` : null;
 
+    const handleRequestServiceClick = () => {
+        if (isAuthenticated && role === 'organization') {
+            setRequestForm({ service: '', property_type: '', description: '' });
+            setRequestError('');
+            setView('request');
+        } else {
+            navigate(`/request-service/${company.id}`);
+        }
+    };
+
+    const handleRequestSubmit = async (event) => {
+        event.preventDefault();
+        setRequestError('');
+        if (!requestForm.service || !requestForm.property_type || !requestForm.description.trim()) {
+            setRequestError('Please fill in all required fields.');
+            return;
+        }
+        setRequestSubmitting(true);
+        try {
+            await requestService.createRequest(company.id, {
+                service: requestForm.service,
+                property_type: requestForm.property_type,
+                description: requestForm.description.trim(),
+            });
+            addToast('Request sent to the company', 'success');
+            setView('profile');
+        } catch (err) {
+            setRequestError(err.message || 'Failed to submit request');
+        } finally {
+            setRequestSubmitting(false);
+        }
+    };
+
     return (
         <div className="company-profile-page">
             <div className="container">
-                <button className="company-profile-back" type="button" onClick={() => navigate('/companies')}>
+                <button className="cpp-back" type="button" onClick={() => navigate('/companies')}>
                     <ArrowLeft size={16} /> Back to companies
                 </button>
 
-                <section className="company-profile-hero">
-                    {coverUrl && <img className="company-profile-cover" src={coverUrl} alt="" />}
-                    <div className="company-profile-hero-content">
-                        <div className="company-profile-logo">
-                            {logoUrl ? <img src={logoUrl} alt={`${company.name} logo`} /> : <span>{company.name?.charAt(0) || 'C'}</span>}
+                {/* ===== Cover / identity block ===== */}
+                <section className="cpp-cover">
+                    <div className="cpp-cover-tile">
+                        {logoUrl ? <img src={logoUrl} alt={`${company.name} logo`} /> : <span>{company.name?.charAt(0) || 'C'}</span>}
+                    </div>
+                    <div className="cpp-cover-info">
+                        <div className="cpp-cover-name-row">
+                            <h1>{company.name}</h1>
+                            {isVerified && <span className="cpp-gold-badge"><BadgeCheck size={14} /> Verified</span>}
                         </div>
-                        <div className="company-profile-heading">
-                            <div className="company-profile-title-row">
-                                <h1>{company.name}</h1>
-                                {isVerified && <span className="verified-badge"><BadgeCheck size={16} /> Verified Company</span>}
-                            </div>
-                            {company.tagline && <p className="company-profile-tagline">{company.tagline}</p>}
-                            <div className="company-profile-meta-row">
-                                {company.location && <span><MapPin size={15} /> {company.location}</span>}
-                                {rating !== null && rating !== undefined && reviewCount > 0 && (
-                                    <span className="company-profile-rating"><Star size={15} /> {rating} <small>({reviewCount} reviews)</small></span>
-                                )}
-                                {(!rating || reviewCount === 0) && <span className="company-profile-no-reviews">No reviews yet</span>}
-                            </div>
-                            {isVerified && (
-                                <div className="company-profile-status-row">
-                                    <span className="status-badge status-verified">Verified</span>
-                                </div>
+                        {company.tagline && <p className="cpp-tagline">{company.tagline}</p>}
+                        <div className="cpp-cover-meta">
+                            {isApproved && (
+                                <span className="cpp-mint-pill"><CheckCircle2 size={13} /> Verified Company</span>
+                            )}
+                            {company.location && <span className="cpp-meta-item"><MapPin size={14} /> {company.location}</span>}
+                            {rating !== null && rating !== undefined && reviewCount > 0 ? (
+                                <span className="cpp-meta-item cpp-rating"><Star size={14} fill="currentColor" /> {rating} <small>({reviewCount} reviews)</small></span>
+                            ) : (
+                                <span className="cpp-meta-item cpp-muted">No reviews yet</span>
                             )}
                         </div>
                     </div>
                 </section>
 
-                <div className="company-profile-actions">
-                    <button className="btn btn-primary" type="button" onClick={() => navigate(`/request-service/${company.id}`)}>
-                        <CalendarDays size={17} /> Request Service
-                    </button>
-                    {(contactHref || phoneHref) && (
-                        <a className="btn btn-secondary" href={contactHref || phoneHref}>
-                            <MessageCircle size={17} /> Contact Company
-                        </a>
-                    )}
-                </div>
-
-                <div className="company-profile-tabs" role="tablist">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            type="button"
-                            role="tab"
-                            aria-selected={activeTab === tab.id}
-                            className={activeTab === tab.id ? 'active' : ''}
-                            onClick={() => setActiveTab(tab.id)}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-
-                {activeTab === 'overview' && (
-                    <section className="company-profile-tab-panel">
-                        <div className="company-profile-section">
-                            <h2>About Us</h2>
-                            <p>{company.description || 'No description provided.'}</p>
+                {view === 'profile' ? (
+                    <>
+                        {/* ===== Action row ===== */}
+                        <div className="cpp-actions">
+                            <button className="cpp-btn cpp-btn-primary" type="button" onClick={handleRequestServiceClick}>
+                                <CalendarDays size={17} /> Request Service
+                            </button>
+                            <button className="cpp-btn cpp-btn-outline" type="button" onClick={() => setContactOpen(true)}>
+                                <MessageCircle size={17} /> Contact Company
+                            </button>
                         </div>
-                        <div className="company-profile-section-grid">
-                            <div className="company-profile-section">
-                                <h2>Specialties</h2>
-                                {specialties.length ? (
-                                    <ul className="company-profile-list">{specialties.map((specialty) => <li key={specialty}>{specialty}</li>)}</ul>
-                                ) : <p className="muted-text">No specialties added.</p>}
-                            </div>
-                            <div className="company-profile-section">
-                                <h2>Service Areas</h2>
-                                {serviceAreas.length ? (
-                                    <ul className="company-profile-list">{serviceAreas.map((area) => <li key={area}>{area}</li>)}</ul>
-                                ) : <p className="muted-text">No service areas added.</p>}
-                            </div>
+
+                        {/* ===== Tabs ===== */}
+                        <div className="cpp-tabs" role="tablist">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={activeTab === tab.id}
+                                    className={activeTab === tab.id ? 'active' : ''}
+                                    onClick={() => setActiveTab(tab.id)}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
                         </div>
-                        {(company.phone || company.email || company.working_hours) && (
-                            <div className="company-profile-section company-profile-contact">
-                                <h2>Contact Information</h2>
-                                <div className="company-profile-contact-grid">
-                                    {company.phone && <span><Phone size={16} /> <a href={phoneHref}>{company.phone}</a></span>}
-                                    {company.email && <span><Mail size={16} /> <a href={contactHref}>{company.email}</a></span>}
-                                    {company.location && <span><MapPin size={16} /> {company.location}</span>}
-                                    {company.working_hours && <span><Clock size={16} /> {company.working_hours}</span>}
+
+                        {activeTab === 'overview' && (
+                            <section className="cpp-tab-panel">
+                                <div className="cpp-section">
+                                    <h2>About Us</h2>
+                                    <p>{company.description || 'No description provided.'}</p>
                                 </div>
-                            </div>
+                                <div className="cpp-section-grid">
+                                    <div className="cpp-section">
+                                        <h2>Specialties</h2>
+                                        {specialties.length ? (
+                                            <ul className="cpp-list">{specialties.map((specialty) => <li key={specialty}>{specialty}</li>)}</ul>
+                                        ) : <p className="cpp-muted-text">No specialties added.</p>}
+                                    </div>
+                                    <div className="cpp-section">
+                                        <h2>Service Areas</h2>
+                                        {serviceAreas.length ? (
+                                            <ul className="cpp-list">{serviceAreas.map((area) => <li key={area}>{area}</li>)}</ul>
+                                        ) : <p className="cpp-muted-text">No service areas added.</p>}
+                                    </div>
+                                </div>
+                                <div className="cpp-section cpp-contact-card">
+                                    <h2>Contact Information</h2>
+                                    <div className="cpp-contact-grid">
+                                        <span><Phone size={16} /> {company.phone ? <a href={phoneHref}>{company.phone}</a> : 'Not provided'}</span>
+                                        <span><Mail size={16} /> {company.email ? <a href={contactHref}>{company.email}</a> : 'Not provided'}</span>
+                                        <span><MapPin size={16} /> {company.location || 'Not provided'}</span>
+                                        <span><Clock size={16} /> {company.working_hours || 'Not provided'}</span>
+                                    </div>
+                                </div>
+                            </section>
                         )}
-                    </section>
-                )}
 
-                {activeTab === 'services' && (
-                    <section className="company-profile-tab-panel">
-                        <div className="company-profile-section">
-                            <h2>Our Services</h2>
-                            {companyServices.length ? (
-                                <div className="company-service-grid">
-                                    {companyServices.map((service, index) => (
-                                        <article className="company-service-card" key={`${service.id || service.name || index}`}>
-                                            <Sparkles size={20} />
-                                            <h3>{service.name || formatService(service.category || service)}</h3>
-                                            {service.description && <p>{service.description}</p>}
-                                            {service.category && <span className="service-category">{formatService(service.category)}</span>}
-                                        </article>
-                                    ))}
+                        {activeTab === 'services' && (
+                            <section className="cpp-tab-panel">
+                                <div className="cpp-section">
+                                    <h2>Our Services</h2>
+                                    {companyServices.length ? (
+                                        <div className="cpp-service-grid">
+                                            {companyServices.map((service, index) => {
+                                                const category = service.category || service;
+                                                const isCleaning = category === 'cleaning';
+                                                const Icon = isCleaning ? Droplets : PartyPopper;
+                                                return (
+                                                    <article className="cpp-service-card" key={`${service.id || service.name || index}`}>
+                                                        <span className={`cpp-service-icon ${isCleaning ? 'cleaning' : 'decoration'}`}>
+                                                            <Icon size={18} />
+                                                        </span>
+                                                        <h3>{service.name || formatService(category)}</h3>
+                                                        {service.description && <p>{service.description}</p>}
+                                                        {category && (
+                                                            <span className={`cpp-tag ${isCleaning ? 'cpp-tag-cleaning' : 'cpp-tag-decoration'}`}>
+                                                                {formatService(category)}
+                                                            </span>
+                                                        )}
+                                                    </article>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : <p className="cpp-muted-text">No services added yet.</p>}
                                 </div>
-                            ) : <p className="muted-text">No services added yet.</p>}
-                        </div>
-                    </section>
-                )}
+                            </section>
+                        )}
 
-                {activeTab === 'gallery' && (
-                    <section className="company-profile-tab-panel">
-                        <div className="company-profile-section">
-                            <h2>Gallery</h2>
-                            {gallery.length ? (
-                                <div className="company-gallery-grid">
-                                    {gallery.map((image) => (
-                                        <figure className="company-gallery-item" key={image.id}>
-                                            <img src={getMediaUrl(image.image)} alt={image.title || `${company.name} work`} />
-                                            {(image.title || image.description) && (
-                                                <figcaption>
-                                                    {image.title && <strong>{image.title}</strong>}
-                                                    {image.description && <p>{image.description}</p>}
-                                                </figcaption>
-                                            )}
-                                        </figure>
-                                    ))}
+                        {activeTab === 'gallery' && (
+                            <section className="cpp-tab-panel">
+                                <div className="cpp-section">
+                                    <h2>Gallery</h2>
+                                    {gallery.length ? (
+                                        <div className="cpp-gallery-grid">
+                                            {gallery.map((image) => (
+                                                <figure className="cpp-gallery-item" key={image.id}>
+                                                    <img src={getMediaUrl(image.image)} alt={image.title || `${company.name} work`} />
+                                                    {(image.title || image.description) && (
+                                                        <figcaption>
+                                                            {image.title && <strong>{image.title}</strong>}
+                                                            {image.description && <p>{image.description}</p>}
+                                                        </figcaption>
+                                                    )}
+                                                </figure>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="cpp-empty"><Images size={30} /><p>No photos added.</p></div>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="company-profile-empty"><Images size={30} /><p>No gallery images yet.</p></div>
-                            )}
-                        </div>
-                    </section>
-                )}
+                            </section>
+                        )}
 
-                {activeTab === 'reviews' && (
-                    <section className="company-profile-tab-panel">
-                        <div className="company-profile-section">
-                            <h2>Client Reviews</h2>
-                            {reviewsLoading ? <p className="muted-text">Loading reviews...</p> : reviews.length ? (
-                                <div className="company-reviews-grid">
-                                    {reviews.map((review) => (
-                                        <article className="company-review-card" key={review.id}>
-                                            <div className="company-review-heading">
-                                                <StarRating rating={review.rating} />
-                                                <span>{formatDate(review.created_at || review.date)}</span>
-                                            </div>
-                                            <p className="company-review-comment">"{review.comment || review.text}"</p>
-                                            <div className="company-review-author">
-                                                <strong>{review.customer_name || review.customer?.name || 'Client'}</strong>
-                                                {(review.service_name || review.service) && <span>{review.service_name || formatService(review.service)}</span>}
-                                            </div>
-                                        </article>
-                                    ))}
+                        {activeTab === 'reviews' && (
+                            <section className="cpp-tab-panel">
+                                <div className="cpp-section">
+                                    <h2>Client Reviews</h2>
+                                    {reviewsLoading ? <p className="cpp-muted-text">Loading reviews...</p> : reviews.length ? (
+                                        <div className="cpp-reviews-grid">
+                                            {reviews.map((review) => (
+                                                <article className="cpp-review-card" key={review.id}>
+                                                    <div className="cpp-review-heading">
+                                                        <StarRating rating={review.rating} />
+                                                        <span>{formatDate(review.created_at || review.date)}</span>
+                                                    </div>
+                                                    <p className="cpp-review-comment">"{review.comment || review.text}"</p>
+                                                    <div className="cpp-review-author">
+                                                        <strong>{review.customer_name || review.customer?.name || 'Client'}</strong>
+                                                        {(review.service_name || review.service) && <span>{review.service_name || formatService(review.service)}</span>}
+                                                    </div>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="cpp-empty">
+                                            <Star size={30} />
+                                            <p>No reviews yet. Reviews appear here once organizations complete a service with this company.</p>
+                                        </div>
+                                    )}
                                 </div>
-                            ) : <div className="company-profile-empty"><Star size={30} /><p>No reviews yet</p></div>}
+                            </section>
+                        )}
+                    </>
+                ) : (
+                    /* ===== Request Service view ===== */
+                    <section className="cpp-request-view">
+                        <div className="cpp-request-summary">
+                            <h2>{company.name}</h2>
+                            <p>{company.description || 'No description provided.'}</p>
+                            <div className="cpp-request-summary-field">
+                                <span>Location</span>
+                                <strong>{company.location || 'Not provided'}</strong>
+                            </div>
+                            <div className="cpp-request-summary-field">
+                                <span>Email</span>
+                                <strong>{company.email || 'Not provided'}</strong>
+                            </div>
+                            <div className="cpp-request-summary-field">
+                                <span>Phone</span>
+                                <strong>{company.phone || 'Not provided'}</strong>
+                            </div>
                         </div>
+
+                        <form className="cpp-request-form" onSubmit={handleRequestSubmit}>
+                            <h2>Request Service</h2>
+                            {requestError && <div className="cpp-form-error">{requestError}</div>}
+
+                            <div className="cpp-form-group">
+                                <label>Service Type *</label>
+                                <select
+                                    value={requestForm.service}
+                                    onChange={(e) => setRequestForm((cur) => ({ ...cur, service: e.target.value }))}
+                                    required
+                                >
+                                    <option value="">Select a service offered by this company</option>
+                                    {companyServices.map((service, index) => {
+                                        const value = service.category || service;
+                                        return (
+                                            <option key={`${value}-${index}`} value={value}>
+                                                {service.name || formatService(value)}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+
+                            <div className="cpp-form-group">
+                                <label>Property Type *</label>
+                                <select
+                                    value={requestForm.property_type}
+                                    onChange={(e) => setRequestForm((cur) => ({ ...cur, property_type: e.target.value }))}
+                                    required
+                                >
+                                    <option value="">Select property type</option>
+                                    {PROPERTY_TYPES.map((type) => (
+                                        <option key={type.value} value={type.value}>{type.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="cpp-form-group">
+                                <label>Description *</label>
+                                <textarea
+                                    value={requestForm.description}
+                                    onChange={(e) => setRequestForm((cur) => ({ ...cur, description: e.target.value }))}
+                                    placeholder="Describe what you need..."
+                                    required
+                                />
+                            </div>
+
+                            <div className="cpp-form-actions">
+                                <button type="button" className="cpp-btn cpp-btn-outline" onClick={() => setView('profile')} disabled={requestSubmitting}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="cpp-btn cpp-btn-primary" disabled={requestSubmitting}>
+                                    {requestSubmitting ? 'Submitting...' : 'Submit Request'}
+                                </button>
+                            </div>
+                        </form>
                     </section>
                 )}
             </div>
+
+            {contactOpen && (
+                <div className="cpp-modal-overlay" onClick={() => setContactOpen(false)}>
+                    <div className="cpp-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="cpp-modal-head">
+                            <h3>Contact {company.name}</h3>
+                            <button className="cpp-modal-close" onClick={() => setContactOpen(false)} aria-label="Close">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="cpp-modal-body">
+                            {phoneHref ? (
+                                <a className="cpp-contact-link" href={phoneHref}><Phone size={16} /> {company.phone}</a>
+                            ) : null}
+                            {contactHref ? (
+                                <a className="cpp-contact-link" href={contactHref}><Mail size={16} /> {company.email}</a>
+                            ) : null}
+                            {!phoneHref && !contactHref && (
+                                <p className="cpp-muted-text">This company hasn't added contact details yet.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

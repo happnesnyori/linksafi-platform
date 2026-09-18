@@ -105,7 +105,7 @@ class AdminUserListView(generics.ListAPIView):
         return qs.order_by("-date_joined")
 
 
-class AdminUserDetailView(generics.RetrieveUpdateAPIView):
+class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminUserDetailSerializer
     permission_classes = (IsAdmin,)
     queryset = User.objects.all()
@@ -114,6 +114,13 @@ class AdminUserDetailView(generics.RetrieveUpdateAPIView):
         obj = super().get_object()
         obj.service_requests_count = ServiceRequest.objects.filter(organization=obj).count()
         return obj
+
+    def perform_destroy(self, instance):
+        if instance.is_staff or instance.is_superuser:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({"detail": "Admin accounts can't be deleted from this endpoint."})
+        log_admin_action(self.request.user, "user_deleted", instance)
+        instance.delete()
 
 
 class AdminCompanyListView(generics.ListCreateAPIView):

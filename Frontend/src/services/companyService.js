@@ -96,6 +96,26 @@ export const getFeaturedReviews = async () => {
     return response.results || response || [];
 };
 
+export const getFavorites = async () => {
+    const response = await api('/favorites/');
+    return response.results || response || [];
+};
+
+export const addFavorite = async (companyId) => {
+    const response = await api('/favorites/', {
+        method: 'POST',
+        body: { company_id: companyId },
+    });
+    return response;
+};
+
+export const removeFavorite = async (companyId) => {
+    const response = await api(`/favorites/${companyId}/`, {
+        method: 'DELETE',
+    });
+    return response;
+};
+
 export const companyService = {
     getCompanies,
     getCompanyById,
@@ -111,6 +131,9 @@ export const companyService = {
     deleteGalleryImage,
     getCompanyReviews,
     getFeaturedReviews,
+    getFavorites,
+    addFavorite,
+    removeFavorite,
 };
 
 export default companyService;

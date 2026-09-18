@@ -7,13 +7,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User
-from accounts.permissions import IsAdmin, IsCompany
+from accounts.permissions import IsAdmin, IsCompany, IsOrganization
 from admin_api.models import log_admin_action
-from companies.models import Company, GalleryImage, Service
+from companies.models import Company, CompanyFavorite, GalleryImage, Service
 from reviews.models import Review
 
 from .serializers import (
     CompanyAdminSerializer,
+    CompanyFavoriteSerializer,
     CompanySerializer,
     GalleryImageSerializer,
     ServiceSerializer,
@@ -98,6 +99,9 @@ class CompanyListCreateView(generics.ListCreateAPIView):
         )
         service = self.request.query_params.get("service")
         search = self.request.query_params.get("search")
+        location = self.request.query_params.get("location")
+        if location:
+            qs = qs.filter(location__icontains=location)
         if service and service != "all":
             if service == Company.SERVICE_BOTH:
                 qs = qs.filter(
@@ -354,6 +358,41 @@ class CompanyGalleryDetailView(APIView):
             return Response({"detail": "You can only delete your own images."}, status=status.HTTP_403_FORBIDDEN)
         image.delete()
         return Response({"detail": "Image deleted."}, status=status.HTTP_204_NO_CONTENT)
+
+
+class FavoriteListCreateView(generics.ListCreateAPIView):
+    """Organization: list/add its own saved companies. Never exposes other organizations' favorites."""
+    serializer_class = CompanyFavoriteSerializer
+    permission_classes = (permissions.IsAuthenticated, IsOrganization)
+    pagination_class = None
+
+    def get_queryset(self):
+        return CompanyFavorite.objects.filter(
+            organization=self.request.user
+        ).select_related("company")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        favorite, _ = CompanyFavorite.objects.get_or_create(
+            organization=request.user,
+            company_id=serializer.validated_data["company_id"],
+        )
+        return Response(
+            CompanyFavoriteSerializer(favorite, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class FavoriteDeleteView(APIView):
+    permission_classes = (permissions.IsAuthenticated, IsOrganization)
+
+    def delete(self, request, company_id):
+        favorite = get_object_or_404(
+            CompanyFavorite, organization=request.user, company_id=company_id
+        )
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AdminCompanyListView(generics.ListAPIView):

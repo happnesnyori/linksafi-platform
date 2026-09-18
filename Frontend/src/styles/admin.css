@@ -1808,3 +1808,391 @@
     min-width: 620px;
   }
 }
+
+/* ==========================================================
+   SAFILINK ADMIN — additional pages (Pending/Approved/Add
+   Company, Organizations, Settings, notices, filter chips)
+========================================================== */
+
+.admin-notice-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff8ec;
+  border: 1px solid #f3dfae;
+  color: #8a5c15;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.admin-card {
+  background: #fff;
+  border: 1px solid #e0ecea;
+  border-radius: 11px;
+  box-shadow: 0 5px 16px rgba(15, 63, 61, .04);
+  padding: 24px;
+}
+
+/* Filter chips */
+.admin-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.admin-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #dce9e7;
+  background: #fff;
+  color: #3d5652;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-filter-chip .chip-count {
+  background: #eef4f3;
+  color: #3d5652;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 11px;
+}
+
+.admin-filter-chip.active {
+  background: #0f7a6e;
+  border-color: #0f7a6e;
+  color: #fff;
+}
+
+.admin-filter-chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* Pending approvals — card grid */
+.admin-pending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.admin-pending-card {
+  background: #fff;
+  border: 1px solid #e0ecea;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-pending-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-pending-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #eaf4f2;
+  color: #0f7a6e;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 16px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.admin-pending-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-pending-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: #12383a;
+}
+
+.admin-pending-meta {
+  font-size: 12.5px;
+  color: #6b7f7c;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-pending-about {
+  font-size: 13px;
+  color: #445250;
+  line-height: 1.55;
+}
+
+.admin-pending-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-pending-service-tag {
+  background: #eef4f3;
+  color: #305a54;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.admin-pending-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.admin-pending-actions .btn {
+  flex: 1;
+}
+
+/* Settings page */
+.admin-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.admin-settings-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #12383a;
+  margin-bottom: 4px;
+}
+
+.admin-settings-section-desc {
+  font-size: 12.5px;
+  color: #6b7f7c;
+  margin-bottom: 16px;
+}
+
+.admin-catalog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-catalog-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e8f0ee;
+  border-radius: 9px;
+}
+
+.admin-catalog-item-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-catalog-item-dot.cleaning { background: #0f7a6e; }
+.admin-catalog-item-dot.decoration { background: #d97706; }
+
+.admin-catalog-item-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  flex: 1;
+}
+
+.admin-catalog-item-count {
+  font-size: 11.5px;
+  color: #6b7f7c;
+}
+
+.admin-admins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-admin-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e8f0ee;
+  border-radius: 9px;
+}
+
+.admin-admin-item-name {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.admin-admin-item-email {
+  font-size: 12px;
+  color: #6b7f7c;
+}
+
+.admin-temp-password-box {
+  background: #eaf4f2;
+  border: 1px solid #bfe0d8;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.admin-temp-password-value {
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f4a42;
+  background: #fff;
+  border: 1px dashed #9dcdc2;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .admin-pending-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================
+   SAFILINK ADMIN — sidebar theme
+   (matches the company portal sidebar palette exactly; overrides
+   the earlier light-sidebar rules above — only the sidebar itself
+   changes, the rest of the workspace stays as-is)
+========================================================== */
+
+.admin-sidebar {
+  background: #0E2420;
+  border-right: none;
+  box-shadow: 8px 0 24px rgba(6, 20, 17, 0.18);
+}
+
+.admin-sidebar-close {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-sidebar-header {
+  border-bottom-color: rgba(255, 255, 255, 0.10);
+}
+
+.admin-logo-icon {
+  background: #2F6F63;
+  box-shadow: 0 7px 14px rgba(47, 111, 99, 0.35);
+}
+
+.admin-logo-text span:first-child {
+  color: #FFFFFF;
+}
+
+.admin-logo-text span:nth-child(2) {
+  color: #f0a94e;
+}
+
+.admin-logo-text small {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-nav-link,
+.admin-nav-group-toggle {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.admin-nav-link:hover,
+.admin-nav-group-toggle:hover {
+  background: #163832;
+  color: #FFFFFF;
+}
+
+.admin-nav-group-toggle.active {
+  background: #163832;
+  color: #FFFFFF;
+}
+
+.admin-nav-link.active {
+  background: #2F6F63;
+  color: #FFFFFF;
+  box-shadow: 0 7px 14px rgba(47, 111, 99, 0.30);
+}
+
+.admin-nav-link.active svg {
+  color: #FFFFFF;
+}
+
+.admin-nav-chevron {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-nav-submenu {
+  border-left-color: rgba(255, 255, 255, 0.15);
+}
+
+.admin-nav-submenu .admin-nav-link {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.admin-nav-badge {
+  background: #d97706;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: auto;
+}
+
+.admin-nav-link.active .admin-nav-badge {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.admin-sidebar-footer {
+  border-top-color: rgba(255, 255, 255, 0.10);
+}
+
+.admin-avatar {
+  background: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+}
+
+.admin-user-name {
+  color: #FFFFFF;
+}
+
+.admin-user-email,
+.admin-user-role {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-logout-btn {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.admin-logout-btn:hover {
+  border-color: #f87171;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+}

@@ -6,6 +6,7 @@ import {
     UserCheck,
     Ban,
     Edit,
+    Trash2,
     ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
@@ -14,53 +15,51 @@ import adminService from '../../services/adminService';
 
 const ITEMS_PER_PAGE = 10;
 
-const roleOptions = [
-    { value: '', label: 'All Roles' },
-    { value: 'organization', label: 'Organization' },
-    { value: 'company', label: 'Company' },
-    { value: 'admin', label: 'Admin' },
-];
-
 const activeOptions = [
     { value: '', label: 'All' },
     { value: 'true', label: 'Active' },
     { value: 'false', label: 'Inactive' },
 ];
 
+const orgTypeLabels = {
+    university: 'University',
+    apartment: 'Apartment',
+};
+
 const getErrorMessage = (error) => error?.data?.message || error?.message || 'Request failed';
 
-export default function AdminCustomers() {
-    const [customers, setCustomers] = useState([]);
+export default function AdminOrganizations() {
+    const [organizations, setOrganizations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [roleFilter, setRoleFilter] = useState('');
     const [activeFilter, setActiveFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const [editingCustomer, setEditingCustomer] = useState(null);
+    const [editingOrg, setEditingOrg] = useState(null);
     const [editForm, setEditForm] = useState({ name: '', phone: '' });
     const [editLoading, setEditLoading] = useState(false);
-    const [viewingCustomer, setViewingCustomer] = useState(null);
-    const [customerRequests, setCustomerRequests] = useState([]);
+    const [viewingOrg, setViewingOrg] = useState(null);
+    const [orgRequests, setOrgRequests] = useState([]);
     const [viewLoading, setViewLoading] = useState(false);
+    const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null);
+    const [permanentDeleteLoading, setPermanentDeleteLoading] = useState(false);
 
     const { addToast } = useToast();
 
-    const loadCustomers = async () => {
+    const loadOrganizations = async () => {
         try {
             setLoading(true);
-            const filters = {};
-            if (roleFilter) filters.role = roleFilter;
+            const filters = { role: 'organization' };
             if (activeFilter !== '') filters.is_active = activeFilter;
             if (search) filters.search = search;
 
             const data = await adminService.getCustomers(filters, currentPage, ITEMS_PER_PAGE);
-            setCustomers(data.results || data || []);
+            setOrganizations(data.results || data || []);
             setTotalItems(data.count || 0);
             setTotalPages(Math.max(1, Math.ceil((data.count || 0) / ITEMS_PER_PAGE)));
         } catch (err) {
-            addToast('Failed to load customers', 'error');
+            addToast('Failed to load organizations', 'error');
         } finally {
             setLoading(false);
         }
@@ -71,62 +70,62 @@ export default function AdminCustomers() {
             setCurrentPage(1);
             return;
         }
-        loadCustomers();
-    }, [roleFilter, activeFilter, search, currentPage]);
+        loadOrganizations();
+    }, [activeFilter, search, currentPage]);
 
     const handleActivate = async (id) => {
         try {
             await adminService.updateCustomer(id, { is_active: true });
-            addToast('Customer activated', 'success');
-            loadCustomers();
+            addToast('Organization activated', 'success');
+            loadOrganizations();
         } catch (err) {
-            addToast(err.data?.message || 'Failed to activate customer', 'error');
+            addToast(err.data?.message || 'Failed to activate organization', 'error');
         }
     };
 
     const handleDeactivate = async (id) => {
         try {
             await adminService.updateCustomer(id, { is_active: false });
-            addToast('Customer deactivated', 'success');
-            loadCustomers();
+            addToast('Organization deactivated', 'success');
+            loadOrganizations();
         } catch (err) {
-            addToast(err.data?.message || 'Failed to deactivate customer', 'error');
+            addToast(err.data?.message || 'Failed to deactivate organization', 'error');
         }
     };
 
-    const handleEdit = (customer) => {
-        setEditingCustomer(customer);
+    const handleEdit = (org) => {
+        setEditingOrg(org);
         setEditForm({
-            name: customer.name || '',
-            phone: customer.phone || '',
+            name: org.name || '',
+            phone: org.phone || '',
         });
     };
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
-        if (!editingCustomer) return;
+        if (!editingOrg) return;
         try {
             setEditLoading(true);
-            await adminService.updateCustomer(editingCustomer.id, editForm);
-            addToast('Customer updated successfully', 'success');
-            setEditingCustomer(null);
-            loadCustomers();
+            await adminService.updateCustomer(editingOrg.id, editForm);
+            addToast('Organization updated successfully', 'success');
+            setEditingOrg(null);
+            loadOrganizations();
         } catch (err) {
-            addToast(err.data?.message || 'Failed to update customer', 'error');
+            addToast(err.data?.message || 'Failed to update organization', 'error');
         } finally {
             setEditLoading(false);
         }
     };
 
-    const handleView = async (customer) => {
+    const handleView = async (org) => {
         try {
             setViewLoading(true);
-            setViewingCustomer(customer);
-            const data = await adminService.getCustomerRequests(customer.id);
-            setCustomerRequests(data.service_requests || data.requests || data || []);
+            setViewingOrg(org);
+            const data = await adminService.getCustomerRequests(org.id);
+            setOrgRequests(data.service_requests || data.requests || data || []);
         } catch (error) {
             addToast(getErrorMessage(error), 'error');
-            setViewingCustomer(null);
+            setViewingOrg(null);
         } finally {
             setViewLoading(false);
         }
@@ -142,26 +141,30 @@ export default function AdminCustomers() {
     };
 
     const getActiveBadgeClass = (isActive) => (isActive ? 'admin-badge-active' : 'admin-badge-inactive');
+    const getOrgType = (org) => orgTypeLabels[org.organization_type] || '-';
 
-    const getRoleBadgeClass = (role) => {
-        const map = {
-            organization: 'admin-badge-organization',
-            company: 'admin-badge-company',
-            admin: 'admin-badge-suspended',
-        };
-        return map[role] || 'admin-badge-organization';
+    const handlePermanentDelete = async () => {
+        if (!permanentDeleteTarget) return;
+        try {
+            setPermanentDeleteLoading(true);
+            await adminService.deleteCustomer(permanentDeleteTarget.id);
+            addToast('Organization permanently deleted', 'success');
+            setPermanentDeleteTarget(null);
+            setViewingOrg(null);
+            await loadOrganizations();
+        } catch (err) {
+            addToast(err.data?.detail || err.data?.message || err.message || 'Failed to delete organization', 'error');
+        } finally {
+            setPermanentDeleteLoading(false);
+        }
     };
-
-    const getCustomerRole = (customer) => customer.is_staff || customer.is_superuser
-        ? 'admin'
-        : customer.role || 'user';
 
     return (
         <div className="admin-page">
             <div className="admin-page-header">
                 <div>
-                    <h1 className="admin-page-title">Customers</h1>
-                    <p className="admin-page-subtitle">Manage platform users and their access</p>
+                    <h1 className="admin-page-title">Organizations</h1>
+                    <p className="admin-page-subtitle">Universities and apartment properties using SafiLink</p>
                 </div>
             </div>
 
@@ -170,20 +173,11 @@ export default function AdminCustomers() {
                     <Search size={18} />
                     <input
                         type="text"
-                        placeholder="Search customers..."
+                        placeholder="Search organizations..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <select
-                    className="admin-filter-select"
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                >
-                    {roleOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                </select>
                 <select
                     className="admin-filter-select"
                     value={activeFilter}
@@ -197,10 +191,10 @@ export default function AdminCustomers() {
 
             {loading ? (
                 <div className="admin-loading"><div className="spinner" /></div>
-            ) : customers.length === 0 ? (
+            ) : organizations.length === 0 ? (
                 <div className="admin-empty-state">
                     <div className="admin-empty-state-icon"><Search size={28} /></div>
-                    <h3>No customers found</h3>
+                    <h3>No organizations found</h3>
                     <p>Try adjusting your search or filters</p>
                 </div>
             ) : (
@@ -211,46 +205,49 @@ export default function AdminCustomers() {
                                 <tr>
                                     <th>Name</th>
                                     <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Phone</th>
+                                    <th>Type</th>
+                                    <th>Total Requests</th>
                                     <th>Status</th>
                                     <th>Date Joined</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {customers.map((customer) => (
-                                    <tr key={customer.id}>
-                                        <td className="admin-table-cell-primary">{customer.name || 'N/A'}</td>
-                                        <td className="admin-table-cell-muted">{customer.email}</td>
+                                {organizations.map((org) => (
+                                    <tr key={org.id}>
+                                        <td className="admin-table-cell-primary">{org.name || 'N/A'}</td>
+                                        <td className="admin-table-cell-muted">{org.email}</td>
+                                        <td>{getOrgType(org)}</td>
+                                        <td>{org.total_requests ?? 0}</td>
                                         <td>
-                                            <span className={`admin-status-badge ${getRoleBadgeClass(getCustomerRole(customer))}`}>
-                                                {getCustomerRole(customer)}
+                                            <span className={`admin-status-badge ${getActiveBadgeClass(org.is_active)}`}>
+                                                {org.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
-                                        <td>{customer.phone || '-'}</td>
-                                        <td>
-                                            <span className={`admin-status-badge ${getActiveBadgeClass(customer.is_active)}`}>
-                                                {customer.is_active ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </td>
-                                        <td className="admin-table-cell-muted">{formatDate(customer.date_joined || customer.created_at)}</td>
+                                        <td className="admin-table-cell-muted">{formatDate(org.date_joined || org.created_at)}</td>
                                         <td>
                                             <div className="admin-table-cell-actions">
-                                                <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleView(customer)} aria-label={`View ${customer.name || customer.email}`}>
+                                                <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleView(org)} aria-label={`View ${org.name || org.email}`}>
                                                     <Eye size={14} /> View
                                                 </button>
-                                                {customer.is_active ? (
-                                                    <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleDeactivate(customer.id)}>
+                                                {org.is_active ? (
+                                                    <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleDeactivate(org.id)}>
                                                         <Ban size={14} /> Deactivate
                                                     </button>
                                                 ) : (
-                                                    <button className="admin-btn admin-btn-amber admin-btn-sm" onClick={() => handleActivate(customer.id)}>
+                                                    <button className="admin-btn admin-btn-amber admin-btn-sm" onClick={() => handleActivate(org.id)}>
                                                         <UserCheck size={14} /> Activate
                                                     </button>
                                                 )}
-                                                <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleEdit(customer)}>
+                                                <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => handleEdit(org)}>
                                                     <Edit size={14} />
+                                                </button>
+                                                <button
+                                                    className="admin-btn admin-btn-danger admin-btn-sm"
+                                                    onClick={() => setPermanentDeleteTarget(org)}
+                                                    aria-label={`Delete ${org.name || org.email} permanently`}
+                                                >
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </td>
@@ -291,12 +288,12 @@ export default function AdminCustomers() {
                 </>
             )}
 
-            {viewingCustomer && (
-                <div className="admin-modal-overlay" onClick={() => setViewingCustomer(null)}>
+            {viewingOrg && (
+                <div className="admin-modal-overlay" onClick={() => setViewingOrg(null)}>
                     <div className="admin-modal admin-modal-wide" onClick={(event) => event.stopPropagation()}>
                         <div className="admin-modal-header">
-                            <h3>{viewingCustomer.name || viewingCustomer.email}</h3>
-                            <button className="admin-modal-close" onClick={() => setViewingCustomer(null)} aria-label="Close customer details">
+                            <h3>{viewingOrg.name || viewingOrg.email}</h3>
+                            <button className="admin-modal-close" onClick={() => setViewingOrg(null)} aria-label="Close organization details">
                                 <X size={18} />
                             </button>
                         </div>
@@ -305,19 +302,19 @@ export default function AdminCustomers() {
                                 <div className="admin-loading"><div className="spinner" /></div>
                             ) : (
                                 <div className="admin-detail-grid">
-                                    <div><span>Email</span><strong>{viewingCustomer.email || '-'}</strong></div>
-                                    <div><span>Phone</span><strong>{viewingCustomer.phone || '-'}</strong></div>
-                                    <div><span>Role</span><strong>{getCustomerRole(viewingCustomer)}</strong></div>
-                                    <div><span>Status</span><strong>{viewingCustomer.is_active ? 'Active' : 'Inactive'}</strong></div>
-                                    <div><span>Date Joined</span><strong>{formatDate(viewingCustomer.date_joined)}</strong></div>
-                                    <div><span>Service Requests</span><strong>{customerRequests.length}</strong></div>
+                                    <div><span>Email</span><strong>{viewingOrg.email || '-'}</strong></div>
+                                    <div><span>Phone</span><strong>{viewingOrg.phone || '-'}</strong></div>
+                                    <div><span>Type</span><strong>{getOrgType(viewingOrg)}</strong></div>
+                                    <div><span>Status</span><strong>{viewingOrg.is_active ? 'Active' : 'Inactive'}</strong></div>
+                                    <div><span>Date Joined</span><strong>{formatDate(viewingOrg.date_joined)}</strong></div>
+                                    <div><span>Total Requests</span><strong>{orgRequests.length}</strong></div>
                                     <div className="admin-detail-full">
                                         <span>Recent Requests</span>
-                                        {customerRequests.length === 0 ? (
+                                        {orgRequests.length === 0 ? (
                                             <strong>No service requests</strong>
                                         ) : (
                                             <div className="admin-request-list">
-                                                {customerRequests.map((request) => (
+                                                {orgRequests.map((request) => (
                                                     <div key={request.id} className="admin-request-list-item">
                                                         <strong>{request.company_name || 'Company'}</strong>
                                                         <span>{request.service} · {request.property_type || 'Property'} · {formatDate(request.requested_date)} · {request.status}</span>
@@ -330,19 +327,25 @@ export default function AdminCustomers() {
                             )}
                         </div>
                         <div className="admin-modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setViewingCustomer(null)}>Close</button>
+                            <button
+                                className="btn btn-danger"
+                                style={{ marginRight: 'auto' }}
+                                onClick={() => setPermanentDeleteTarget(viewingOrg)}
+                            >
+                                <Trash2 size={16} /> Delete Permanently
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => setViewingOrg(null)}>Close</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Edit Modal */}
-            {editingCustomer && (
-                <div className="admin-modal-overlay" onClick={() => setEditingCustomer(null)}>
+            {editingOrg && (
+                <div className="admin-modal-overlay" onClick={() => setEditingOrg(null)}>
                     <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="admin-modal-header">
-                            <h3>Edit Customer</h3>
-                            <button className="admin-modal-close" onClick={() => setEditingCustomer(null)}>
+                            <h3>Edit Organization</h3>
+                            <button className="admin-modal-close" onClick={() => setEditingOrg(null)}>
                                 <Edit size={18} />
                             </button>
                         </div>
@@ -367,7 +370,7 @@ export default function AdminCustomers() {
                                 </div>
                             </div>
                             <div className="admin-modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setEditingCustomer(null)}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setEditingOrg(null)}>
                                     Cancel
                                 </button>
                                 <button type="submit" className="btn btn-primary" disabled={editLoading}>
@@ -378,6 +381,58 @@ export default function AdminCustomers() {
                     </div>
                 </div>
             )}
+
+            {permanentDeleteTarget && (
+                <PermanentDeleteConfirm
+                    org={permanentDeleteTarget}
+                    loading={permanentDeleteLoading}
+                    onCancel={() => setPermanentDeleteTarget(null)}
+                    onConfirm={handlePermanentDelete}
+                />
+            )}
         </div>
     );
 }
+
+const PermanentDeleteConfirm = ({ org, loading, onCancel, onConfirm }) => {
+    const [confirmText, setConfirmText] = useState('');
+    const expected = org.email;
+    const canConfirm = confirmText.trim() === expected;
+
+    return (
+        <div className="admin-modal-overlay" onClick={onCancel}>
+            <div className="admin-modal" onClick={(event) => event.stopPropagation()}>
+                <div className="admin-modal-header">
+                    <h3>Delete Organization Permanently</h3>
+                    <button className="admin-modal-close" onClick={onCancel} aria-label="Cancel deletion">
+                        <X size={18} />
+                    </button>
+                </div>
+                <div className="admin-modal-body">
+                    <p className="admin-modal-message">
+                        This <strong>permanently deletes</strong> <strong>{org.name || org.email}</strong> and their account.
+                        Their reviews are removed; their past service requests are kept for the companies' records but
+                        no longer linked to this organization. This cannot be undone.
+                    </p>
+                    <div className="admin-form-group" style={{ marginTop: '16px' }}>
+                        <label className="admin-form-label">
+                            Type <strong>{expected}</strong> to confirm
+                        </label>
+                        <input
+                            className="admin-form-input"
+                            value={confirmText}
+                            onChange={(event) => setConfirmText(event.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                </div>
+                <div className="admin-modal-footer">
+                    <button className="btn btn-secondary" onClick={onCancel} disabled={loading}>Cancel</button>
+                    <button className="btn btn-danger" onClick={onConfirm} disabled={loading || !canConfirm}>
+                        {loading ? 'Deleting...' : 'Delete Permanently'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
