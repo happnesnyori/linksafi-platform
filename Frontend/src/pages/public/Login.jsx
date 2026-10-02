@@ -155,12 +155,12 @@ export default function Login() {
                         {loading ? 'Signing In...' : 'Sign In'}
                     </button>
 
-                    {/* Forget your password */}
+                    {/* Forgot your password */}
                     <Link
-                        to="/how-it-works"
+                        to="/forgot-password"
                         className="login-forgot-link"
                     >
-                        Forget your password?
+                        Forgot your password?
                     </Link>
 
                     {/* Register Option */}

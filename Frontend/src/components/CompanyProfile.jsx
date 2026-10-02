@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
+import Lightbox from './Lightbox';
 import { getCompanyReviews } from '../services/companyService';
 import { requestService } from '../services/requestService';
 import { formatService, getMediaUrl } from '../utils/helpers';
@@ -52,15 +53,19 @@ const StarRating = ({ rating }) => (
 
 export default function CompanyProfile({ company }) {
     const navigate = useNavigate();
-    const { isAuthenticated, role } = useAuth();
+    const { isAuthenticated, role, user } = useAuth();
     const { addToast } = useToast();
     const [view, setView] = useState('profile');
     const [activeTab, setActiveTab] = useState('overview');
     const [reviews, setReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
+    const [lightboxGroupIndex, setLightboxGroupIndex] = useState(null);
+    const [galleryHighlightId, setGalleryHighlightId] = useState(null);
+    const pendingGalleryScrollId = useRef(null);
+    const gallerySectionRefs = useRef({});
 
-    const [requestForm, setRequestForm] = useState({ service: '', property_type: '', description: '' });
+    const [requestForm, setRequestForm] = useState({ service: '', property_type: '', description: '', preferred_contact: 'email' });
     const [requestSubmitting, setRequestSubmitting] = useState(false);
     const [requestError, setRequestError] = useState('');
 
@@ -83,11 +88,36 @@ export default function CompanyProfile({ company }) {
         };
     }, [company?.id]);
 
+    useEffect(() => {
+        if (activeTab !== 'gallery' || pendingGalleryScrollId.current == null) return;
+        const targetId = pendingGalleryScrollId.current;
+        pendingGalleryScrollId.current = null;
+        const node = gallerySectionRefs.current[targetId];
+        if (node) {
+            node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setGalleryHighlightId(targetId);
+            const timer = setTimeout(() => setGalleryHighlightId(null), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab]);
+
     if (!company) return null;
 
     const serviceItems = Array.isArray(company.service_items) ? company.service_items : [];
     const services = Array.isArray(company.services) ? company.services : [];
     const gallery = Array.isArray(company.gallery_images) ? company.gallery_images : [];
+    const lightboxGroups = gallery.map((image) => ({
+        id: image.id,
+        title: image.title,
+        items: [
+            { src: getMediaUrl(image.image), title: image.title, description: image.description },
+            ...(image.sub_images || []).map((sub) => ({
+                src: getMediaUrl(sub.image),
+                title: image.title,
+                description: sub.description || image.description,
+            })),
+        ],
+    }));
     const specialties = Array.isArray(company.specialties) ? company.specialties : [];
     const serviceAreas = Array.isArray(company.service_areas) ? company.service_areas : [];
     const rating = company.rating ?? company.average_rating;
@@ -97,7 +127,35 @@ export default function CompanyProfile({ company }) {
     const logoUrl = getMediaUrl(company.logo || company.logoUrl);
     const companyServices = serviceItems.length
         ? serviceItems
-        : services.map((service) => ({ name: formatService(service), category: service, description: '' }));
+        : services
+            .filter((service) => service !== 'both')
+            .map((service) => ({ name: formatService(service), category: service, description: '' }));
+
+    const galleryByServiceId = gallery.reduce((acc, image) => {
+        const key = image.service ?? 'other';
+        acc[key] = acc[key] || [];
+        acc[key].push(image);
+        return acc;
+    }, {});
+    const gallerySections = [
+        ...companyServices
+            .filter((service) => service.id != null && galleryByServiceId[service.id]?.length)
+            .map((service) => ({ id: service.id, title: service.name, images: galleryByServiceId[service.id] })),
+        ...(galleryByServiceId.other?.length
+            ? [{ id: 'other', title: 'Other Photos', images: galleryByServiceId.other }]
+            : []),
+    ];
+
+    const openLightboxFor = (imageId) => {
+        const index = lightboxGroups.findIndex((group) => group.id === imageId);
+        if (index >= 0) setLightboxGroupIndex(index);
+    };
+
+    const handleViewServiceGallery = (service) => {
+        if (service.id == null || !galleryByServiceId[service.id]?.length) return;
+        pendingGalleryScrollId.current = service.id;
+        setActiveTab('gallery');
+    };
 
     const formatDate = (dateValue) => {
         if (!dateValue) return '';
@@ -113,7 +171,7 @@ export default function CompanyProfile({ company }) {
 
     const handleRequestServiceClick = () => {
         if (isAuthenticated && role === 'organization') {
-            setRequestForm({ service: '', property_type: '', description: '' });
+            setRequestForm({ service: '', property_type: '', description: '', preferred_contact: 'email' });
             setRequestError('');
             setView('request');
         } else {
@@ -128,12 +186,17 @@ export default function CompanyProfile({ company }) {
             setRequestError('Please fill in all required fields.');
             return;
         }
+        if (requestForm.preferred_contact === 'phone' && !user?.phone) {
+            setRequestError('Add a phone number to your account to receive responses by phone, or choose email instead.');
+            return;
+        }
         setRequestSubmitting(true);
         try {
             await requestService.createRequest(company.id, {
                 service: requestForm.service,
                 property_type: requestForm.property_type,
                 description: requestForm.description.trim(),
+                preferred_contact: requestForm.preferred_contact,
             });
             addToast('Request sent to the company', 'success');
             setView('profile');
@@ -241,27 +304,49 @@ export default function CompanyProfile({ company }) {
                                 <div className="cpp-section">
                                     <h2>Our Services</h2>
                                     {companyServices.length ? (
-                                        <div className="cpp-service-grid">
-                                            {companyServices.map((service, index) => {
-                                                const category = service.category || service;
-                                                const isCleaning = category === 'cleaning';
-                                                const Icon = isCleaning ? Droplets : PartyPopper;
-                                                return (
-                                                    <article className="cpp-service-card" key={`${service.id || service.name || index}`}>
-                                                        <span className={`cpp-service-icon ${isCleaning ? 'cleaning' : 'decoration'}`}>
-                                                            <Icon size={18} />
-                                                        </span>
-                                                        <h3>{service.name || formatService(category)}</h3>
-                                                        {service.description && <p>{service.description}</p>}
-                                                        {category && (
-                                                            <span className={`cpp-tag ${isCleaning ? 'cpp-tag-cleaning' : 'cpp-tag-decoration'}`}>
-                                                                {formatService(category)}
-                                                            </span>
-                                                        )}
-                                                    </article>
-                                                );
-                                            })}
-                                        </div>
+                                        Object.entries(
+                                            companyServices.reduce((groups, service) => {
+                                                const category = service.category || service || 'other';
+                                                groups[category] = groups[category] || [];
+                                                groups[category].push(service);
+                                                return groups;
+                                            }, {})
+                                        ).map(([category, items]) => {
+                                            const isCleaning = category === 'cleaning';
+                                            const Icon = isCleaning ? Droplets : PartyPopper;
+                                            return (
+                                                <div className="cpp-service-group" key={category}>
+                                                    <h3 className="cpp-service-group-title">{formatService(category)}</h3>
+                                                    <div className="cpp-service-grid">
+                                                        {items.map((service, index) => {
+                                                            const photoCount = service.id != null ? (galleryByServiceId[service.id]?.length || 0) : 0;
+                                                            const clickable = photoCount > 0;
+                                                            return (
+                                                                <article
+                                                                    className={`cpp-service-card ${clickable ? 'cpp-service-card-clickable' : ''}`}
+                                                                    key={`${service.id || service.name || index}`}
+                                                                    role={clickable ? 'button' : undefined}
+                                                                    tabIndex={clickable ? 0 : undefined}
+                                                                    onClick={clickable ? () => handleViewServiceGallery(service) : undefined}
+                                                                    onKeyDown={clickable ? (e) => { if (e.key === 'Enter') handleViewServiceGallery(service); } : undefined}
+                                                                >
+                                                                    <span className={`cpp-service-icon ${isCleaning ? 'cleaning' : 'decoration'}`}>
+                                                                        <Icon size={18} />
+                                                                    </span>
+                                                                    <h3>{service.name || formatService(category)}</h3>
+                                                                    {service.description && <p>{service.description}</p>}
+                                                                    {clickable && (
+                                                                        <span className="cpp-service-photo-link">
+                                                                            <Images size={13} /> {photoCount} photo{photoCount === 1 ? '' : 's'} · View
+                                                                        </span>
+                                                                    )}
+                                                                </article>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
                                     ) : <p className="cpp-muted-text">No services added yet.</p>}
                                 </div>
                             </section>
@@ -271,20 +356,41 @@ export default function CompanyProfile({ company }) {
                             <section className="cpp-tab-panel">
                                 <div className="cpp-section">
                                     <h2>Gallery</h2>
-                                    {gallery.length ? (
-                                        <div className="cpp-gallery-grid">
-                                            {gallery.map((image) => (
-                                                <figure className="cpp-gallery-item" key={image.id}>
-                                                    <img src={getMediaUrl(image.image)} alt={image.title || `${company.name} work`} />
-                                                    {(image.title || image.description) && (
-                                                        <figcaption>
-                                                            {image.title && <strong>{image.title}</strong>}
-                                                            {image.description && <p>{image.description}</p>}
-                                                        </figcaption>
-                                                    )}
-                                                </figure>
-                                            ))}
-                                        </div>
+                                    {gallerySections.length ? (
+                                        gallerySections.map((section) => (
+                                            <div
+                                                key={section.id}
+                                                ref={(el) => { gallerySectionRefs.current[section.id] = el; }}
+                                                className={`cpp-gallery-section ${galleryHighlightId === section.id ? 'cpp-gallery-section-highlight' : ''}`}
+                                            >
+                                                <h3 className="cpp-gallery-section-title">
+                                                    {section.title} <span>({section.images.length})</span>
+                                                </h3>
+                                                <div className="cpp-gallery-grid">
+                                                    {section.images.map((image) => (
+                                                        <figure className="cpp-gallery-item" key={image.id}>
+                                                            <button
+                                                                type="button"
+                                                                className="cpp-gallery-item-trigger"
+                                                                onClick={() => openLightboxFor(image.id)}
+                                                                aria-label={`View ${image.title || 'gallery image'} full size`}
+                                                            >
+                                                                <img src={getMediaUrl(image.image)} alt={image.title || `${company.name} work`} />
+                                                                {image.sub_images?.length > 0 && (
+                                                                    <span className="cpp-gallery-item-badge">+{image.sub_images.length}</span>
+                                                                )}
+                                                            </button>
+                                                            {(image.title || image.description) && (
+                                                                <figcaption>
+                                                                    {image.title && <strong>{image.title}</strong>}
+                                                                    {image.description && <p>{image.description}</p>}
+                                                                </figcaption>
+                                                            )}
+                                                        </figure>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))
                                     ) : (
                                         <div className="cpp-empty"><Images size={30} /><p>No photos added.</p></div>
                                     )}
@@ -389,6 +495,18 @@ export default function CompanyProfile({ company }) {
                                 />
                             </div>
 
+                            <div className="cpp-form-group">
+                                <label>How should the company respond? *</label>
+                                <select
+                                    value={requestForm.preferred_contact}
+                                    onChange={(e) => setRequestForm((cur) => ({ ...cur, preferred_contact: e.target.value }))}
+                                    required
+                                >
+                                    <option value="email">Email {user?.email ? `(${user.email})` : ''}</option>
+                                    <option value="phone">Phone {user?.phone ? `(${user.phone})` : '(add a phone number to your profile)'}</option>
+                                </select>
+                            </div>
+
                             <div className="cpp-form-actions">
                                 <button type="button" className="cpp-btn cpp-btn-outline" onClick={() => setView('profile')} disabled={requestSubmitting}>
                                     Cancel
@@ -425,6 +543,13 @@ export default function CompanyProfile({ company }) {
                     </div>
                 </div>
             )}
+
+            <Lightbox
+                groups={lightboxGroups}
+                groupIndex={lightboxGroupIndex}
+                onClose={() => setLightboxGroupIndex(null)}
+                onNavigateGroup={setLightboxGroupIndex}
+            />
         </div>
     );
 }

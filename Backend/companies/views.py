@@ -328,7 +328,10 @@ class CompanyGalleryView(APIView):
                 )
             ):
                 raise PermissionDenied("Company gallery is not publicly visible.")
-        images = company.gallery_images.all()
+        images = company.gallery_images.filter(parent__isnull=True).prefetch_related("sub_images")
+        service_id = request.query_params.get("service")
+        if service_id:
+            images = images.filter(service_id=service_id)
         return Response(GalleryImageSerializer(images, many=True, context={"request": request}).data)
 
     def post(self, request, pk=None):
@@ -343,19 +346,84 @@ class CompanyGalleryView(APIView):
             if company.owner_id != request.user.id and not (request.user.is_staff or request.user.is_superuser):
                 return Response({"detail": "You can only manage gallery for your own company."}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = GalleryImageSerializer(data=request.data, context={"request": request})
+        files = request.FILES.getlist("images") or request.FILES.getlist("image")
+        if not files:
+            return Response({"image": "At least one image is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        payload = {
+            "service": request.data.get("service"),
+            "title": request.data.get("title", ""),
+            "description": request.data.get("description", ""),
+            "ordering": request.data.get("ordering", 0),
+            "image": files[0],
+        }
+        serializer = GalleryImageSerializer(data=payload, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        serializer.save(company=company)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        service = serializer.validated_data.get("service")
+        if service and not company.service_items.filter(pk=service.pk).exists():
+            return Response(
+                {"service": "You can only attach images to services your company offers."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        parent = serializer.save(company=company)
+
+        for extra_file in files[1:]:
+            GalleryImage.objects.create(
+                company=company,
+                service=service,
+                image=extra_file,
+                title=parent.title,
+                description=parent.description,
+                parent=parent,
+            )
+
+        parent.refresh_from_db()
+        return Response(
+            GalleryImageSerializer(parent, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class CompanyGalleryDetailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
 
-    def delete(self, request, pk):
+    def _get_owned_image(self, request, pk):
         image = get_object_or_404(GalleryImage, pk=pk)
         if image.company.owner_id != request.user.id and not (request.user.is_staff or request.user.is_superuser):
-            return Response({"detail": "You can only delete your own images."}, status=status.HTTP_403_FORBIDDEN)
+            return None, Response(
+                {"detail": "You can only manage your own images."}, status=status.HTTP_403_FORBIDDEN
+            )
+        return image, None
+
+    def patch(self, request, pk):
+        image, error = self._get_owned_image(request, pk)
+        if error:
+            return error
+
+        data = {}
+        for field in ("title", "description", "service"):
+            if field in request.data:
+                data[field] = request.data.get(field)
+        files = request.FILES.getlist("image")
+        if files:
+            data["image"] = files[0]
+
+        serializer = GalleryImageSerializer(image, data=data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        service = serializer.validated_data.get("service", image.service)
+        if service and not image.company.service_items.filter(pk=service.pk).exists():
+            return Response(
+                {"service": "You can only attach images to services your company offers."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        image, error = self._get_owned_image(request, pk)
+        if error:
+            return error
         image.delete()
         return Response({"detail": "Image deleted."}, status=status.HTTP_204_NO_CONTENT)
 

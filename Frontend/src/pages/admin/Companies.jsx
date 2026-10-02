@@ -10,13 +10,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import adminService from '../../services/adminService';
-import { formatService } from '../../utils/helpers';
+import { formatService, normalizeServices } from '../../utils/helpers';
 import '../../styles/admin.css';
 
 const SERVICE_OPTIONS = [
     { value: 'cleaning', label: 'Cleaning' },
     { value: 'decoration', label: 'Decoration' },
-    { value: 'both', label: 'Both' },
 ];
 
 const VERIFICATION_OPTIONS = [
@@ -212,7 +211,7 @@ export default function AdminCompanies() {
                 phone: editForm.phone,
                 description: editForm.description,
                 location: editForm.location,
-                services: toList(editForm.services),
+                services: normalizeServices(toList(editForm.services)),
                 verification_status: editForm.verification_status,
             };
             if (editLogo) {

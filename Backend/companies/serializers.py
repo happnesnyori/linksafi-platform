@@ -7,6 +7,13 @@ from accounts.serializers import UserSerializer
 from .models import Company, CompanyFavorite, CompanyService, GalleryImage, Service
 
 
+def normalize_services(value):
+    services = {svc for svc in value if svc in (Company.SERVICE_CLEANING, Company.SERVICE_DECORATION)}
+    if Company.SERVICE_CLEANING in services and Company.SERVICE_DECORATION in services:
+        services.add(Company.SERVICE_BOTH)
+    return sorted(services)
+
+
 def parse_json_form_fields(data):
     parsed = data.copy()
     if hasattr(parsed, "keys"):
@@ -50,12 +57,11 @@ class ServiceSerializer(serializers.ModelSerializer):
         return value
 
 
-class GalleryImageSerializer(serializers.ModelSerializer):
+class GalleryImageChildSerializer(serializers.ModelSerializer):
     class Meta:
         model = GalleryImage
         fields = (
             "id",
-            "company",
             "image",
             "title",
             "description",
@@ -63,13 +69,47 @@ class GalleryImageSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "company", "created_at", "updated_at")
+        read_only_fields = fields
+
+
+class GalleryImageSerializer(serializers.ModelSerializer):
+    service = serializers.PrimaryKeyRelatedField(
+        queryset=Service.objects.all(), required=False, allow_null=True
+    )
+    sub_images = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GalleryImage
+        fields = (
+            "id",
+            "company",
+            "service",
+            "image",
+            "title",
+            "description",
+            "ordering",
+            "sub_images",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "company", "sub_images", "created_at", "updated_at")
+
+    def get_sub_images(self, obj):
+        if obj.parent_id is not None:
+            return []
+        children = obj.sub_images.all()
+        return GalleryImageChildSerializer(children, many=True, context=self.context).data
+
+
+def get_top_level_gallery_images(obj, context=None):
+    images = obj.gallery_images.filter(parent__isnull=True)
+    return GalleryImageSerializer(images, many=True, context=context or {}).data
 
 
 class CompanySerializer(serializers.ModelSerializer):
     owner = UserSerializer(read_only=True)
     service_items = ServiceSerializer(many=True, read_only=True)
-    gallery_images = GalleryImageSerializer(many=True, read_only=True)
+    gallery_images = serializers.SerializerMethodField()
     service_ids = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
@@ -120,6 +160,9 @@ class CompanySerializer(serializers.ModelSerializer):
     def get_service_ids(self, obj):
         return list(obj.service_items.values_list("id", flat=True))
 
+    def get_gallery_images(self, obj):
+        return get_top_level_gallery_images(obj, context=self.context)
+
     def get_rating(self, obj):
         rating = getattr(obj, "_rating", None)
         if rating is not None:
@@ -153,7 +196,7 @@ class CompanySerializer(serializers.ModelSerializer):
         for svc in value:
             if svc not in allowed:
                 raise serializers.ValidationError(f"'{svc}' is not a valid service category.")
-        return value
+        return normalize_services(value)
 
 
 class CompanyAdminSerializer(serializers.ModelSerializer):
@@ -161,7 +204,7 @@ class CompanyAdminSerializer(serializers.ModelSerializer):
     owner = UserSerializer(read_only=True)
     service_items = ServiceSerializer(many=True, read_only=True)
     service_ids = serializers.SerializerMethodField()
-    gallery_images = GalleryImageSerializer(many=True, read_only=True)
+    gallery_images = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
 
@@ -200,6 +243,9 @@ class CompanyAdminSerializer(serializers.ModelSerializer):
     def get_service_ids(self, obj):
         return list(obj.service_items.values_list("id", flat=True))
 
+    def get_gallery_images(self, obj):
+        return get_top_level_gallery_images(obj, context=self.context)
+
     def get_rating(self, obj):
         rating = getattr(obj, "_rating", None)
         if rating is not None:
@@ -233,7 +279,7 @@ class CompanyAdminSerializer(serializers.ModelSerializer):
         for svc in value:
             if svc not in allowed:
                 raise serializers.ValidationError(f"'{svc}' is not a valid service category.")
-        return value
+        return normalize_services(value)
 
     def create(self, validated_data):
         validated_data["status"] = Company.STATUS_APPROVED

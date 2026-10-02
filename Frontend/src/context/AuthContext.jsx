@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getCurrentUser, login as authLogin, logout as authLogout } from '../services/authService';
-import { setToken } from '../services/api';
+import { clearToken, setToken } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -15,6 +15,9 @@ export const AuthProvider = ({ children }) => {
             setUser(data);
             setError(null);
         } catch (err) {
+            if (err.status === 401) {
+                clearToken();
+            }
             setUser(null);
             setError(null);
         } finally {

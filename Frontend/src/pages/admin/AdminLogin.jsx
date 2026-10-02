@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/login.css';
@@ -99,6 +99,10 @@ export default function AdminLogin() {
                     <button type="submit" className="login-submit-btn" disabled={loading}>
                         {loading ? 'Signing In...' : 'Sign In'}
                     </button>
+
+                    <Link to="/forgot-password" className="login-forgot-link">
+                        Forgot your password?
+                    </Link>
 
                     <p style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-muted, #6b7280)', marginTop: '16px' }}>
                         Admin accounts are invite-only and created by an existing administrator.

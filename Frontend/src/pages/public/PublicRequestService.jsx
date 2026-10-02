@@ -26,6 +26,7 @@ export default function PublicRequestService() {
         guest_name: '',
         guest_email: '',
         guest_phone: '',
+        preferred_contact: 'email',
     });
 
     useEffect(() => {
@@ -59,6 +60,12 @@ export default function PublicRequestService() {
             if (!formData.service || !formData.description || !formData.requested_date) {
                 throw new Error('Please fill in all required fields');
             }
+            if (formData.preferred_contact === 'email' && !formData.guest_email.trim()) {
+                throw new Error('Enter your email address so the company can respond by email');
+            }
+            if (formData.preferred_contact === 'phone' && !formData.guest_phone.trim()) {
+                throw new Error('Enter your phone number so the company can respond by phone');
+            }
             await requestService.createPublicRequest(companyId, formData);
             setSubmitted(true);
             setFormData({
@@ -70,6 +77,7 @@ export default function PublicRequestService() {
                 guest_name: '',
                 guest_email: '',
                 guest_phone: '',
+                preferred_contact: 'email',
             });
         } catch (err) {
             setError(err.message || 'Failed to submit request');
@@ -166,12 +174,25 @@ export default function PublicRequestService() {
                                             <input className="form-input" type="text" name="location" value={formData.location} onChange={handleChange} />
                                         </div>
                                         <div className="guest-section">
-                                            <h4>Your Contact Details (Optional)</h4>
+                                            <h4>Your Contact Details</h4>
+                                            <div className="form-group">
+                                                <label className="form-label required">How should the company respond?</label>
+                                                <select className="form-select" name="preferred_contact" value={formData.preferred_contact} onChange={handleChange} required>
+                                                    <option value="email">Email</option>
+                                                    <option value="phone">Phone</option>
+                                                </select>
+                                            </div>
                                             <div className="form-row">
                                                 <div className="form-group"><label className="form-label">Name</label><input className="form-input" type="text" name="guest_name" value={formData.guest_name} onChange={handleChange} /></div>
-                                                <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" name="guest_email" value={formData.guest_email} onChange={handleChange} /></div>
+                                                <div className="form-group">
+                                                    <label className={`form-label${formData.preferred_contact === 'email' ? ' required' : ''}`}>Email</label>
+                                                    <input className="form-input" type="email" name="guest_email" value={formData.guest_email} onChange={handleChange} required={formData.preferred_contact === 'email'} />
+                                                </div>
                                             </div>
-                                            <div className="form-group"><label className="form-label">Phone</label><input className="form-input" type="tel" name="guest_phone" value={formData.guest_phone} onChange={handleChange} /></div>
+                                            <div className="form-group">
+                                                <label className={`form-label${formData.preferred_contact === 'phone' ? ' required' : ''}`}>Phone</label>
+                                                <input className="form-input" type="tel" name="guest_phone" value={formData.guest_phone} onChange={handleChange} required={formData.preferred_contact === 'phone'} />
+                                            </div>
                                         </div>
                                         <Button variant="primary" size="lg" fullWidth type="submit" disabled={submitting}>{submitting ? 'Submitting...' : 'Submit Request'}</Button>
                                     </form>

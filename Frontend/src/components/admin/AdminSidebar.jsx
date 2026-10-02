@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Building2,
-    Users,
     FileText,
     Settings,
     Sparkles,
@@ -41,7 +40,6 @@ const mainNavItems = [
         icon: Building2,
         children: companiesSubItems,
     },
-    { path: '/admin/organizations', label: 'Organizations', icon: Users },
     { path: '/admin/requests', label: 'Service Requests', icon: FileText },
     { path: '/admin/settings', label: 'Platform Settings', icon: Settings },
 ];

@@ -48,7 +48,6 @@ const AdminNavbar = ({ onSearch, pendingApprovals = 0 }) => {
         if (pathname === '/admin/companies/approved') return { section: 'Companies', title: 'Approved Companies' };
         if (pathname === '/admin/companies/new') return { section: 'Companies', title: 'Add Company' };
         if (pathname.startsWith('/admin/companies')) return { section: 'Companies', title: 'All Companies' };
-        if (pathname.startsWith('/admin/organizations')) return { section: null, title: 'Organizations' };
         if (pathname.startsWith('/admin/requests')) return { section: null, title: 'Service Requests' };
         if (pathname.startsWith('/admin/settings')) return { section: null, title: 'Platform Settings' };
         if (pathname.startsWith('/admin/reviews')) return { section: null, title: 'Reviews' };

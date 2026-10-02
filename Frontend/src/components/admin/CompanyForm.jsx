@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
+import { normalizeServices } from '../../utils/helpers';
 
 export const SERVICE_OPTIONS = [
     { value: 'cleaning', label: 'Cleaning' },
     { value: 'decoration', label: 'Decoration' },
-    { value: 'both', label: 'Combined Services' },
 ];
 
 const STATUS_OPTIONS = [
@@ -124,7 +124,7 @@ const CompanyForm = ({
                 description: form.description.trim(),
                 location: form.location.trim(),
                 address: form.address.trim(),
-                services: form.services,
+                services: normalizeServices(form.services),
                 verification_status: form.verification_status,
                 specialties: toList(form.specialties),
             };

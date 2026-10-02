@@ -66,8 +66,9 @@ export const updateMyServices = async (servicesPayload) => {
 
 export const updateServices = async (_userId, servicesPayload) => updateMyServices(servicesPayload);
 
-export const getCompanyGallery = async () => {
-    const response = await api('/companies/me/gallery/');
+export const getCompanyGallery = async (serviceId) => {
+    const query = serviceId ? `?service=${serviceId}` : '';
+    const response = await api(`/companies/me/gallery/${query}`);
     return response.results || response || [];
 };
 
@@ -79,8 +80,49 @@ export const uploadGalleryImage = async (imageData) => {
     return response;
 };
 
+export const uploadServiceImage = async (serviceId, file, title, description) => {
+    const form = new FormData();
+    form.append('image', file);
+    form.append('service', serviceId);
+    if (title) form.append('title', title);
+    if (description) form.append('description', description);
+    return uploadGalleryImage(form);
+};
+
+// Uploads a group of related photos (e.g. a main shot plus close-up/detail shots)
+// as a single gallery item. The first file becomes the main image; the rest are
+// stored as its sub-images.
+export const uploadServiceImageGroup = async (serviceId, files, title, description) => {
+    const form = new FormData();
+    files.forEach((file) => form.append('images', file));
+    form.append('service', serviceId);
+    if (title) form.append('title', title);
+    if (description) form.append('description', description);
+    return uploadGalleryImage(form);
+};
+
+// Edits an existing gallery image's label/description/service, and optionally
+// replaces its image file. Works for both main images and sub-images.
+export const updateGalleryImage = async (imageId, updates) => {
+    const hasFile = updates.image instanceof File;
+    let body;
+    if (hasFile) {
+        body = new FormData();
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) body.append(key, value);
+        });
+    } else {
+        body = updates;
+    }
+    const response = await api(`/companies/gallery/${imageId}/`, {
+        method: 'PATCH',
+        body,
+    });
+    return response;
+};
+
 export const deleteGalleryImage = async (imageId) => {
-    const response = await api(`/companies/me/gallery/${imageId}/`, {
+    const response = await api(`/companies/gallery/${imageId}/`, {
         method: 'DELETE',
     });
     return response;
@@ -128,6 +170,9 @@ export const companyService = {
     updateServices,
     getCompanyGallery,
     uploadGalleryImage,
+    uploadServiceImage,
+    uploadServiceImageGroup,
+    updateGalleryImage,
     deleteGalleryImage,
     getCompanyReviews,
     getFeaturedReviews,

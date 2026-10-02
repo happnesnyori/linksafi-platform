@@ -133,9 +133,23 @@ class GalleryImage(models.Model):
         on_delete=models.CASCADE,
         related_name="gallery_images",
     )
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.SET_NULL,
+        related_name="gallery_images",
+        null=True,
+        blank=True,
+    )
     image = models.ImageField(upload_to="company_gallery/")
     title = models.CharField(max_length=160, blank=True)
     description = models.TextField(blank=True)
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        related_name="sub_images",
+        null=True,
+        blank=True,
+    )
     ordering = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -1,0 +1,65 @@
+.contact-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.contact-method-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 32px 20px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.contact-method-card:hover {
+  border-color: var(--teal-500);
+  transform: translateY(-2px);
+}
+
+.contact-method-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--teal-50);
+  color: var(--teal-700);
+  margin-bottom: 4px;
+}
+
+.contact-method-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.contact-method-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--teal-950);
+}
+
+@media (max-width: 768px) {
+  .contact-methods-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-methods-grid {
+    grid-template-columns: 1fr;
+  }
+}

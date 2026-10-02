@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Building2,
-    Users,
     FileText,
     Clock,
     CheckCircle2,
@@ -105,13 +104,6 @@ export default function AdminDashboard() {
                     subtitle="Live on SafiLink"
                 />
                 <StatCard
-                    title="Total Organizations"
-                    value={stats.total_organizations}
-                    icon={Users}
-                    tone="blue"
-                    subtitle="Registered clients"
-                />
-                <StatCard
                     title="Total Requests"
                     value={stats.total_service_requests}
                     icon={FileText}
@@ -206,7 +198,6 @@ export default function AdminDashboard() {
             <div className="admin-dashboard-links">
                 <button onClick={() => navigate('/admin/requests?status=pending')}><AlertCircle size={18} /><span>Review pending requests</span><ArrowUpRight size={15} /></button>
                 <button onClick={() => navigate('/admin/companies')}><Building2 size={18} /><span>Manage all companies</span><ArrowUpRight size={15} /></button>
-                <button onClick={() => navigate('/admin/organizations')}><Users size={18} /><span>View organizations directory</span><ArrowUpRight size={15} /></button>
             </div>
         </div>
     );

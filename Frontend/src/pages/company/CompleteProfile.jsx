@@ -5,6 +5,7 @@ import Button from '../../components/Button';
 import Loading from '../../components/Loading';
 import { useAuth } from '../../context/AuthContext';
 import { createCompany, getServicesCatalog, updateMyServices } from '../../services/companyService';
+import { normalizeServices } from '../../utils/helpers';
 
 const categoryLabels = {
     cleaning: 'Cleaning',
@@ -84,7 +85,7 @@ export default function CompleteCompanyProfile() {
         try {
             const selectedCatalogServices = catalog.filter((service) => selectedServiceIds.includes(service.id));
             const categories = [...new Set(selectedCatalogServices.map((service) => service.category))];
-            const highLevelServices = categories.length === 2 ? ['both', ...categories] : categories;
+            const highLevelServices = normalizeServices(categories);
 
             await createCompany({
                 name: formData.name.trim(),

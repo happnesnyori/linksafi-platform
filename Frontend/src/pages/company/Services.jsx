@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Plus, Edit2, X, PlusCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Edit2, X, PlusCircle, Images } from 'lucide-react';
 import CompanyLayout from '../../layouts/CompanyLayout';
 import Loading from '../../components/Loading';
 import { useToast } from '../../components/Toast';
-import { createService, getMyCompany, getServicesCatalog, updateMyServices } from '../../services/companyService';
+import {
+    createService,
+    getCompanyGallery,
+    getMyCompany,
+    getServicesCatalog,
+    updateMyServices,
+} from '../../services/companyService';
 import { formatService } from '../../utils/helpers';
 
 const emptyNewService = { name: '', category: 'cleaning', description: '' };
@@ -20,15 +27,31 @@ export default function ManageServices() {
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newService, setNewService] = useState(emptyNewService);
     const [creating, setCreating] = useState(false);
+    const [serviceImages, setServiceImages] = useState({});
+
+    const groupImagesByService = (images) => {
+        const grouped = {};
+        (Array.isArray(images) ? images : []).forEach((image) => {
+            if (!image.service) return;
+            if (!grouped[image.service]) grouped[image.service] = [];
+            grouped[image.service].push(image);
+        });
+        return grouped;
+    };
 
     const load = async () => {
         setLoading(true);
         try {
-            const [catalogData, companyData] = await Promise.all([getServicesCatalog(), getMyCompany()]);
+            const [catalogData, companyData, galleryData] = await Promise.all([
+                getServicesCatalog(),
+                getMyCompany(),
+                getCompanyGallery(),
+            ]);
             setCatalog(Array.isArray(catalogData) ? catalogData : []);
             const items = Array.isArray(companyData?.service_items) ? companyData.service_items : [];
             setServiceItems(items);
             setSelectedIds([...new Set(items.map((s) => s.id).filter(Boolean))]);
+            setServiceImages(groupImagesByService(galleryData));
         } catch (err) {
             addToast(err.message || 'Failed to load services', 'error');
         } finally {
@@ -136,6 +159,11 @@ export default function ManageServices() {
                             </div>
                             <span className="cp-service-category">{formatService(service.category)}</span>
                             {service.description && <p className="cp-service-desc">{service.description}</p>}
+
+                            <Link to="/company/gallery" className="cp-service-gallery-link">
+                                <Images size={13} />
+                                {(serviceImages[service.id] || []).length} photo{(serviceImages[service.id] || []).length === 1 ? '' : 's'} · Manage in Gallery
+                            </Link>
                         </div>
                     ))}
                 </div>

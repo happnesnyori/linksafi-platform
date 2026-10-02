@@ -7,8 +7,13 @@ import Home from './pages/public/Home';
 import HowItWorks from './pages/public/HowItWorks';
 import Companies from './pages/public/Companies';
 import CompanyDetails from './pages/public/CompanyDetails';
+import Services from './pages/public/Services';
+import Contact from './pages/public/Contact';
+import FAQ from './pages/public/FAQ';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
+import ForgotPassword from './pages/public/ForgotPassword';
+import ResetPassword from './pages/public/ResetPassword';
 import PublicRequestService from './pages/public/PublicRequestService';
 import OrganizationDashboard from './pages/organization/Dashboard';
 import Marketplace from './pages/organization/Marketplace';
@@ -29,7 +34,6 @@ import AdminCompanies from './pages/admin/Companies';
 import AdminCompaniesPending from './pages/admin/CompaniesPending';
 import AdminCompaniesApproved from './pages/admin/CompaniesApproved';
 import AdminCompanyAddForm from './pages/admin/CompanyAddForm';
-import AdminOrganizations from './pages/admin/Organizations';
 import AdminRequests from './pages/admin/Requests';
 import AdminReviews from './pages/admin/Reviews';
 import AdminSettings from './pages/admin/Settings';
@@ -56,9 +60,14 @@ function App() {
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/companies" element={<Companies />} />
                 <Route path="/companies/:id" element={<CompanyDetails />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/faq" element={<FAQ />} />
                 <Route path="/request-service/:companyId" element={<PublicRequestService />} />
                 <Route path="/login" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/overview' : '/dashboard'} /> : <Login />} />
                 <Route path="/register" element={isAuthenticated ? <Navigate to={isAdmin ? '/admin' : user?.role === 'company' ? '/company/overview' : '/dashboard'} /> : <Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
                 <Route path="/admin/login" element={isAuthenticated && isAdmin ? <Navigate to="/admin" /> : <AdminLogin />} />
 
                 <Route path="/dashboard" element={<ProtectedRoute><RoleRoute allowedRoles={['organization']}><OrganizationDashboard /></RoleRoute></ProtectedRoute>} />
@@ -85,8 +94,6 @@ function App() {
                     <Route path="companies/approved" element={<AdminCompaniesApproved />} />
                     <Route path="companies/new" element={<AdminCompanyAddForm />} />
                     <Route path="companies/add" element={<Navigate to="/admin/companies/new" replace />} />
-                    <Route path="organizations" element={<AdminOrganizations />} />
-                    <Route path="customers" element={<Navigate to="/admin/organizations" replace />} />
                     <Route path="requests" element={<AdminRequests />} />
                     <Route path="reviews" element={<AdminReviews />} />
                     <Route path="settings" element={<AdminSettings />} />

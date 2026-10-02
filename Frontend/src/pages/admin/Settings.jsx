@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Copy, ShieldCheck, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Copy, ShieldCheck, Sparkles, Pencil, Check, X } from 'lucide-react';
 import { useToast } from '../../components/Toast';
+import { useAuth } from '../../context/AuthContext';
 import adminService from '../../services/adminService';
 import { formatService } from '../../utils/helpers';
 import '../../styles/admin.css';
@@ -10,12 +11,17 @@ const emptyAdmin = { name: '', email: '' };
 
 export default function AdminSettings() {
     const { addToast } = useToast();
+    const { user: currentUser } = useAuth();
 
     const [services, setServices] = useState([]);
     const [servicesLoading, setServicesLoading] = useState(true);
     const [newService, setNewService] = useState(emptyService);
     const [serviceSubmitting, setServiceSubmitting] = useState(false);
     const [serviceError, setServiceError] = useState('');
+    const [editingServiceId, setEditingServiceId] = useState(null);
+    const [editDraft, setEditDraft] = useState(emptyService);
+    const [editSubmitting, setEditSubmitting] = useState(false);
+    const [editError, setEditError] = useState('');
 
     const [admins, setAdmins] = useState([]);
     const [adminsLoading, setAdminsLoading] = useState(true);
@@ -88,6 +94,42 @@ export default function AdminSettings() {
         }
     };
 
+    const startEditService = (service) => {
+        setEditingServiceId(service.id);
+        setEditDraft({ name: service.name, category: service.category, description: service.description || '' });
+        setEditError('');
+    };
+
+    const cancelEditService = () => {
+        setEditingServiceId(null);
+        setEditDraft(emptyService);
+        setEditError('');
+    };
+
+    const handleUpdateService = async (e, service) => {
+        e.preventDefault();
+        if (!editDraft.name.trim()) {
+            setEditError('Service name is required');
+            return;
+        }
+        setEditSubmitting(true);
+        setEditError('');
+        try {
+            const updated = await adminService.updateService(service.id, {
+                name: editDraft.name.trim(),
+                category: editDraft.category,
+                description: editDraft.description.trim(),
+            });
+            setServices((current) => current.map((s) => (s.id === service.id ? { ...s, ...updated } : s)));
+            addToast('Service updated', 'success');
+            cancelEditService();
+        } catch (err) {
+            setEditError(err.data?.name?.[0] || err.data?.message || err.message || 'Failed to update service');
+        } finally {
+            setEditSubmitting(false);
+        }
+    };
+
     const handleInviteAdmin = async (e) => {
         e.preventDefault();
         if (!newAdmin.name.trim() || !newAdmin.email.trim()) {
@@ -108,6 +150,17 @@ export default function AdminSettings() {
             setAdminError(err.data?.email?.[0] || err.data?.message || err.message || 'Failed to invite admin');
         } finally {
             setAdminSubmitting(false);
+        }
+    };
+
+    const handleRemoveAdmin = async (admin) => {
+        if (!window.confirm(`Remove admin access for "${admin.name || admin.email}"? They will no longer be able to sign in.`)) return;
+        try {
+            await adminService.removeAdmin(admin.id);
+            addToast('Admin removed', 'success');
+            setAdmins((current) => current.filter((a) => a.id !== admin.id));
+        } catch (err) {
+            addToast(err.data?.detail || err.message || 'Failed to remove admin', 'error');
         }
     };
 
@@ -145,20 +198,76 @@ export default function AdminSettings() {
                                     <p>No services in the catalog yet.</p>
                                 </div>
                             ) : services.map((service) => (
-                                <div key={service.id} className="admin-catalog-item">
-                                    <span className={`admin-catalog-item-dot ${service.category}`} />
-                                    <span className="admin-catalog-item-name">{service.name}</span>
-                                    <span className="admin-catalog-item-count">
-                                        {formatService(service.category)} · {service.companies_count ?? 0} companies
-                                    </span>
-                                    <button
-                                        className="admin-icon-button"
-                                        aria-label={`Remove ${service.name}`}
-                                        onClick={() => handleDeleteService(service)}
+                                editingServiceId === service.id ? (
+                                    <form
+                                        key={service.id}
+                                        className="admin-catalog-item admin-catalog-item-editing"
+                                        onSubmit={(e) => handleUpdateService(e, service)}
                                     >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
+                                        <span className={`admin-catalog-item-dot ${editDraft.category}`} />
+                                        <input
+                                            className="admin-form-input admin-catalog-edit-input"
+                                            value={editDraft.name}
+                                            onChange={(e) => setEditDraft((cur) => ({ ...cur, name: e.target.value }))}
+                                            autoFocus
+                                        />
+                                        <select
+                                            className="admin-form-select admin-catalog-edit-select"
+                                            value={editDraft.category}
+                                            onChange={(e) => setEditDraft((cur) => ({ ...cur, category: e.target.value }))}
+                                        >
+                                            <option value="cleaning">Cleaning</option>
+                                            <option value="decoration">Decoration</option>
+                                        </select>
+                                        <button
+                                            type="submit"
+                                            className="admin-icon-button"
+                                            aria-label={`Save ${service.name}`}
+                                            disabled={editSubmitting}
+                                        >
+                                            <Check size={14} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="admin-icon-button"
+                                            aria-label="Cancel edit"
+                                            onClick={cancelEditService}
+                                            disabled={editSubmitting}
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                        <textarea
+                                            className="admin-form-textarea admin-catalog-edit-textarea"
+                                            rows={2}
+                                            placeholder="Description (optional)"
+                                            value={editDraft.description}
+                                            onChange={(e) => setEditDraft((cur) => ({ ...cur, description: e.target.value }))}
+                                        />
+                                        {editError && <div className="admin-form-error admin-catalog-edit-error">{editError}</div>}
+                                    </form>
+                                ) : (
+                                    <div key={service.id} className="admin-catalog-item">
+                                        <span className={`admin-catalog-item-dot ${service.category}`} />
+                                        <span className="admin-catalog-item-name">{service.name}</span>
+                                        <span className="admin-catalog-item-count">
+                                            {formatService(service.category)} · {service.companies_count ?? 0} companies
+                                        </span>
+                                        <button
+                                            className="admin-icon-button"
+                                            aria-label={`Edit ${service.name}`}
+                                            onClick={() => startEditService(service)}
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                        <button
+                                            className="admin-icon-button"
+                                            aria-label={`Remove ${service.name}`}
+                                            onClick={() => handleDeleteService(service)}
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                )
                             ))}
                         </div>
                     )}
@@ -222,6 +331,15 @@ export default function AdminSettings() {
                                             {admin.email} · {admin.is_superuser ? 'Superuser' : 'Staff'} · Joined {formatDate(admin.date_joined)}
                                         </div>
                                     </div>
+                                    {currentUser?.is_superuser && !admin.is_superuser && admin.id !== currentUser.id && (
+                                        <button
+                                            className="admin-icon-button"
+                                            aria-label={`Remove ${admin.name || admin.email}`}
+                                            onClick={() => handleRemoveAdmin(admin)}
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>

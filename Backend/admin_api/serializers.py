@@ -1,10 +1,10 @@
-import json
 import secrets
 
 from rest_framework import serializers
 
 from accounts.models import User
 from companies.models import Company, Service
+from companies.serializers import normalize_services, parse_json_form_fields
 from reviews.models import Review
 from service_requests.models import ServiceRequest
 
@@ -147,6 +147,18 @@ class AdminCompanySerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "owner", "owner_email", "owner_name", "service_ids", "rating", "reviews_count", "requests_received_count", "profile_views", "created_at", "updated_at")
 
+    def to_internal_value(self, data):
+        return super().to_internal_value(parse_json_form_fields(data))
+
+    def validate_services(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("services must be a list.")
+        allowed = {c[0] for c in Company.SERVICE_CHOICES}
+        for svc in value:
+            if svc not in allowed:
+                raise serializers.ValidationError(f"'{svc}' is not a valid service category.")
+        return normalize_services(value)
+
     def get_requests_received_count(self, obj):
         return obj.received_requests.count()
 
@@ -159,7 +171,7 @@ class AdminCompanySerializer(serializers.ModelSerializer):
 
     def get_gallery_images(self, obj):
         from companies.serializers import GalleryImageSerializer
-        return GalleryImageSerializer(obj.gallery_images.all(), many=True).data
+        return GalleryImageSerializer(obj.gallery_images.filter(parent__isnull=True), many=True).data
 
     def get_rating(self, obj):
         from reviews.models import Review
@@ -208,17 +220,7 @@ class AdminCompanyCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def to_internal_value(self, data):
-        parsed = data.copy()
-        if hasattr(parsed, "keys"):
-            parsed = {key: parsed.get(key) for key in parsed.keys()}
-        for field_name in ("services", "specialties"):
-            value = parsed.get(field_name)
-            if isinstance(value, str):
-                try:
-                    parsed[field_name] = json.loads(value)
-                except (TypeError, ValueError):
-                    pass
-        return super().to_internal_value(parsed)
+        return super().to_internal_value(parse_json_form_fields(data))
 
     def validate(self, attrs):
         owner_id = attrs.get("owner_id")
@@ -255,7 +257,7 @@ class AdminCompanyCreateSerializer(serializers.ModelSerializer):
         for svc in value:
             if svc not in allowed:
                 raise serializers.ValidationError(f"'{svc}' is not a valid service.")
-        return value
+        return normalize_services(value)
 
     def create(self, validated_data):
         owner_email = validated_data.pop("owner_email", None)

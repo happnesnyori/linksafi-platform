@@ -6,6 +6,7 @@ from reviews.views import AdminReviewActionView
 
 from .views import (
     AdminAdminCreateView,
+    AdminAdminDetailView,
     AdminAdminListView,
     AdminAuditLogListView,
     AdminCompanyListView,
@@ -41,6 +42,7 @@ urlpatterns = [
     path("admin/services/<int:pk>/", AdminServiceDetailView.as_view()),
     path("admin/admins/", AdminAdminListView.as_view()),
     path("admin/admins/invite/", AdminAdminCreateView.as_view()),
+    path("admin/admins/<int:pk>/", AdminAdminDetailView.as_view()),
     path("admin/audit-log/", AdminAuditLogListView.as_view()),
     re_path(r"^admin/dashboard/?$", AdminDashboardStatsView.as_view()),
     re_path(r"^admin/users/?$", AdminUserListView.as_view()),
@@ -59,5 +61,6 @@ urlpatterns = [
     re_path(r"^admin/services/(?P<pk>\d+)/?$", AdminServiceDetailView.as_view()),
     re_path(r"^admin/admins/?$", AdminAdminListView.as_view()),
     re_path(r"^admin/admins/invite/?$", AdminAdminCreateView.as_view()),
+    re_path(r"^admin/admins/(?P<pk>\d+)/?$", AdminAdminDetailView.as_view()),
     re_path(r"^admin/audit-log/?$", AdminAuditLogListView.as_view()),
 ]

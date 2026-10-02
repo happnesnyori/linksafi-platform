@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db.models import Count
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -11,6 +13,38 @@ from .serializers import (
     PublicServiceRequestSerializer,
     ServiceRequestSerializer,
 )
+
+
+def notify_request_update(req, headline, note=""):
+    """
+    Notifies the client who submitted a request about a status/response update,
+    honoring their preferred contact method. Email is sent automatically when
+    that's their preference; a phone preference is left for the company to
+    follow up on directly (their number is shown on the request in the dashboard).
+    """
+    if req.preferred_contact != ServiceRequest.CONTACT_EMAIL:
+        return
+    recipient = req.contact_email
+    if not recipient:
+        return
+
+    body = (
+        f"Hi {req.contact_name or 'there'},\n\n"
+        f"{headline}\n\n"
+        f"Company: {req.company.name}\n"
+        f"Service: {req.get_service_display()}\n"
+    )
+    if note:
+        body += f"\nMessage from {req.company.name}:\n{note}\n"
+    body += "\nYou can view the full request details by logging into SafiLink."
+
+    send_mail(
+        subject=f"Update on your SafiLink request with {req.company.name}",
+        message=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[recipient],
+        fail_silently=True,
+    )
 
 
 class RequestListCreateView(generics.ListCreateAPIView):
@@ -188,6 +222,13 @@ class _StatusTransitionView(APIView):
         req.status = self.new_status
         req.save()
 
+        headline = (
+            f"Your service request has been accepted by {req.company.name}."
+            if self.new_status == ServiceRequest.STATUS_ACCEPTED
+            else f"Your service request has been declined by {req.company.name}."
+        )
+        notify_request_update(req, headline)
+
         return Response(
             ServiceRequestSerializer(req).data
         )
@@ -241,6 +282,12 @@ class RespondToRequestView(APIView):
             req.status = ServiceRequest.STATUS_ACCEPTED
 
         req.save()
+
+        notify_request_update(
+            req,
+            f"{req.company.name} sent you a response about your service request.",
+            note=note,
+        )
 
         return Response(
             ServiceRequestSerializer(req).data

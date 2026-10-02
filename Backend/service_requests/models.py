@@ -25,6 +25,13 @@ class ServiceRequest(models.Model):
         (STATUS_COMPLETED, "Completed"),
     )
 
+    CONTACT_EMAIL = "email"
+    CONTACT_PHONE = "phone"
+    CONTACT_CHOICES = (
+        (CONTACT_EMAIL, "Email"),
+        (CONTACT_PHONE, "Phone"),
+    )
+
     # Nullable so anonymous (guest) quote requests can be submitted
     organization = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -51,6 +58,9 @@ class ServiceRequest(models.Model):
     location = models.CharField(max_length=200, blank=True)
     requested_date = models.DateField(null=True, blank=True)
     description = models.TextField(blank=True)
+    preferred_contact = models.CharField(
+        max_length=10, choices=CONTACT_CHOICES, default=CONTACT_EMAIL
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
     response_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -61,3 +71,21 @@ class ServiceRequest(models.Model):
 
     def __str__(self):
         return f"Request #{self.id} - {self.service} ({self.status})"
+
+    @property
+    def contact_name(self):
+        if self.organization_id and self.organization:
+            return self.organization.name or self.organization.username
+        return self.guest_name
+
+    @property
+    def contact_email(self):
+        if self.organization_id and self.organization:
+            return self.organization.email
+        return self.guest_email
+
+    @property
+    def contact_phone(self):
+        if self.organization_id and self.organization:
+            return self.organization.phone
+        return self.guest_phone

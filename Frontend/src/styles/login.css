@@ -160,6 +160,21 @@
   line-height: 1.5;
 }
 
+.login-success-alert {
+  margin-bottom: 20px;
+  padding: 12px 15px;
+
+  border-radius: 12px;
+
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+
+  color: #115e59;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* ---------- Form ---------- */
 
 .login-form {

@@ -7,6 +7,7 @@ import Loading from '../../components/Loading';
 import { register } from '../../services/authService';
 import { createCompany, getServicesCatalog, updateMyServices } from '../../services/companyService';
 import { useAuth } from '../../context/AuthContext';
+import { normalizeServices } from '../../utils/helpers';
 import '../../styles/register.css';
 
 const passwordRequirements = [
@@ -41,13 +42,12 @@ export default function Register() {
     const navigate = useNavigate();
     const { login: contextLogin } = useAuth();
 
-    const [accountType, setAccountType] = useState('organization');
+    const accountType = 'company';
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         confirmPassword: '',
         name: '',
-        organizationType: '',
         phone: '',
         location: '',
         description: '',
@@ -62,12 +62,6 @@ export default function Register() {
     const [catalogLoading, setCatalogLoading] = useState(false);
 
     useEffect(() => {
-        if (accountType !== 'company') {
-            setCatalogServices([]);
-            setSelectedServiceIds([]);
-            return;
-        }
-
         let active = true;
         setCatalogLoading(true);
         getServicesCatalog()
@@ -84,7 +78,7 @@ export default function Register() {
         return () => {
             active = false;
         };
-    }, [accountType]);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -121,6 +115,10 @@ export default function Register() {
                 throw new Error('Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.');
             }
 
+            if (selectedServiceIds.length === 0) {
+                throw new Error('Select at least one service from the catalog');
+            }
+
             const userData = {
                 email: formData.email,
                 password: formData.password,
@@ -128,45 +126,32 @@ export default function Register() {
                 name: formData.name,
                 phone: formData.phone,
                 location: formData.location,
+                description: formData.description,
             };
-
-            if (accountType === 'organization') {
-                userData.organization_type = formData.organizationType;
-            } else {
-                if (selectedServiceIds.length === 0) {
-                    throw new Error('Select at least one service from the catalog');
-                }
-                userData.description = formData.description;
-            }
 
             await register(userData);
             await contextLogin({ email: formData.email, password: formData.password });
 
-            // If company account, create company profile
-            if (accountType === 'company') {
-                try {
-                    const selectedCatalogServices = catalogServices.filter((service) => selectedServiceIds.includes(service.id));
-                    const categories = [...new Set(selectedCatalogServices.map((service) => service.category))];
-                    const highLevelServices = categories.length === 2
-                        ? ['both']
-                        : categories;
-                    const companyData = {
-                        name: formData.name,
-                        email: formData.email,
-                        phone: formData.phone,
-                        location: formData.location,
-                        description: formData.description,
-                        services: highLevelServices,
-                    };
-                    await createCompany(companyData);
-                    await updateMyServices(selectedServiceIds);
-                } catch (companyErr) {
-                    console.error('Company creation failed:', companyErr);
-                    throw new Error(`Account created but company profile failed: ${companyErr.message || 'Please create your company profile from the dashboard'}`);
-                }
+            try {
+                const selectedCatalogServices = catalogServices.filter((service) => selectedServiceIds.includes(service.id));
+                const categories = [...new Set(selectedCatalogServices.map((service) => service.category))];
+                const highLevelServices = normalizeServices(categories);
+                const companyData = {
+                    name: formData.name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    location: formData.location,
+                    description: formData.description,
+                    services: highLevelServices,
+                };
+                await createCompany(companyData);
+                await updateMyServices(selectedServiceIds);
+            } catch (companyErr) {
+                console.error('Company creation failed:', companyErr);
+                throw new Error(`Account created but company profile failed: ${companyErr.message || 'Please create your company profile from the dashboard'}`);
             }
 
-            navigate(accountType === 'organization' ? '/dashboard' : '/company/overview');
+            navigate('/company/overview');
         } catch (err) {
             setError(err.message || 'Registration failed. Please try again.');
         } finally {
@@ -189,23 +174,6 @@ export default function Register() {
                         <p className="register-subtitle">Join SafiLink to get started</p>
                     </div>
 
-                    <div className="register-account-selector" role="group" aria-label="Account type">
-                        <button
-                            type="button"
-                            className={`register-account-option ${accountType === 'organization' ? 'active' : ''}`}
-                            onClick={() => setAccountType('organization')}
-                        >
-                            University/Apartment
-                        </button>
-                        <button
-                            type="button"
-                            className={`register-account-option ${accountType === 'company' ? 'active' : ''}`}
-                            onClick={() => setAccountType('company')}
-                        >
-                            Service Company
-                        </button>
-                    </div>
-
                     {error && (
                         <div className="register-error" role="alert">
                             {error}
@@ -214,9 +182,7 @@ export default function Register() {
 
                     <form onSubmit={handleSubmit} className="register-form">
                     <div className="form-group">
-                        <label className="form-label required">
-                            {accountType === 'organization' ? 'Organization Name' : 'Company Name'}
-                        </label>
+                        <label className="form-label required">Company Name</label>
                         <input
                             type="text"
                             className="form-input"
@@ -228,83 +194,62 @@ export default function Register() {
                         />
                     </div>
 
-                    {accountType === 'organization' && (
-                        <div className="form-group">
-                            <label className="form-label required">Organization Type</label>
-                            <select
-                                className="form-select"
-                                name="organizationType"
-                                value={formData.organizationType}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="">Select type</option>
-                                <option value="university">University</option>
-                                <option value="apartment">Apartment Complex</option>
-                            </select>
-                        </div>
-                    )}
+                    <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <textarea
+                            className="form-textarea"
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            placeholder="Tell us about your company..."
+                            style={{ minHeight: '100px' }}
+                        />
+                    </div>
 
-                    {accountType === 'company' && (
-                        <>
-                            <div className="form-group">
-                                <label className="form-label">Description</label>
-                                <textarea
-                                    className="form-textarea"
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    placeholder="Tell us about your company..."
-                                    style={{ minHeight: '100px' }}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label required">Services Offered</label>
-                                {catalogLoading ? (
-                                    <Loading />
-                                ) : catalogServices.length === 0 ? (
-                                    <div className="register-error">No active services are available in the catalog.</div>
-                                ) : (
-                                    <div className="register-services-grid" role="group" aria-label="Services offered">
-                                        {Object.entries(Object.groupBy
-                                            ? Object.groupBy(catalogServices, (service) => service.category)
-                                            : catalogServices.reduce((groups, service) => {
-                                                const category = service.category || 'other';
-                                                groups[category] = groups[category] || [];
-                                                groups[category].push(service);
-                                                return groups;
-                                            }, {})).map(([category, services]) => (
-                                            <div key={category} className="register-service-group">
-                                                <div className="register-service-group-title">{categoryLabels[category] || category}</div>
-                                                {services.map((service) => {
-                                                    const isSelected = selectedServiceIds.includes(service.id);
-                                                    return (
-                                                        <button
-                                                            key={service.id}
-                                                            type="button"
-                                                            className={`register-service-card ${isSelected ? 'active' : ''}`}
-                                                            onClick={() => handleServiceToggle(service.id)}
-                                                            aria-pressed={isSelected}
-                                                        >
-                                                            <span className="register-service-icon">
-                                                                <Sparkles size={22} aria-hidden="true" />
-                                                            </span>
-                                                            <span className="register-service-title">{service.name}</span>
-                                                            <span className="register-service-description">{service.description}</span>
-                                                            <span className="register-service-status">
-                                                                {isSelected ? 'Selected' : 'Select'}
-                                                            </span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        ))}
+                    <div className="form-group">
+                        <label className="form-label required">Services Offered</label>
+                        {catalogLoading ? (
+                            <Loading />
+                        ) : catalogServices.length === 0 ? (
+                            <div className="register-error">No active services are available in the catalog.</div>
+                        ) : (
+                            <div className="register-services-grid" role="group" aria-label="Services offered">
+                                {Object.entries(Object.groupBy
+                                    ? Object.groupBy(catalogServices, (service) => service.category)
+                                    : catalogServices.reduce((groups, service) => {
+                                        const category = service.category || 'other';
+                                        groups[category] = groups[category] || [];
+                                        groups[category].push(service);
+                                        return groups;
+                                    }, {})).map(([category, services]) => (
+                                    <div key={category} className="register-service-group">
+                                        <div className="register-service-group-title">{categoryLabels[category] || category}</div>
+                                        {services.map((service) => {
+                                            const isSelected = selectedServiceIds.includes(service.id);
+                                            return (
+                                                <button
+                                                    key={service.id}
+                                                    type="button"
+                                                    className={`register-service-card ${isSelected ? 'active' : ''}`}
+                                                    onClick={() => handleServiceToggle(service.id)}
+                                                    aria-pressed={isSelected}
+                                                >
+                                                    <span className="register-service-icon">
+                                                        <Sparkles size={22} aria-hidden="true" />
+                                                    </span>
+                                                    <span className="register-service-title">{service.name}</span>
+                                                    <span className="register-service-description">{service.description}</span>
+                                                    <span className="register-service-status">
+                                                        {isSelected ? 'Selected' : 'Select'}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
-                                )}
+                                ))}
                             </div>
-                        </>
-                    )}
+                        )}
+                    </div>
 
                     <div className="form-group">
                         <label className="form-label required">Email</label>

@@ -1,10 +1,11 @@
 from django.db.models import Count, Q
 from rest_framework import generics, permissions
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User
-from accounts.permissions import IsAdmin
+from accounts.permissions import IsAdmin, IsSuperUser
 from companies.models import Company, Service
 from service_requests.models import ServiceRequest
 from reviews.models import Review
@@ -117,7 +118,6 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         if instance.is_staff or instance.is_superuser:
-            from rest_framework.exceptions import ValidationError
             raise ValidationError({"detail": "Admin accounts can't be deleted from this endpoint."})
         log_admin_action(self.request.user, "user_deleted", instance)
         instance.delete()
@@ -339,6 +339,20 @@ class AdminAdminCreateView(APIView):
             },
             status=201,
         )
+
+
+class AdminAdminDetailView(generics.DestroyAPIView):
+    """Superadmin: remove a staff admin account that was invited by an admin.
+
+    Restricted to superusers, and the queryset excludes superusers so this
+    endpoint can never be used to remove yourself or another superadmin.
+    """
+    permission_classes = (IsSuperUser,)
+    queryset = User.objects.filter(is_staff=True, is_superuser=False)
+
+    def perform_destroy(self, instance):
+        log_admin_action(self.request.user, "admin_removed", instance)
+        instance.delete()
 
 
 class AdminAuditLogListView(generics.ListAPIView):

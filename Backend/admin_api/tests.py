@@ -164,7 +164,7 @@ class AdminApiTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         company = Company.objects.get(name="Multipart Company")
-        self.assertEqual(company.services, ["cleaning", "decoration"])
+        self.assertEqual(company.services, ["both", "cleaning", "decoration"])
         self.assertEqual(company.specialties, ["deep cleaning"])
 
     def test_admin_company_creation_accepts_logo_upload(self):
@@ -238,3 +238,78 @@ class AdminApiTests(TestCase):
         response = client.get("/api/admin/dashboard")
 
         self.assertEqual(response.status_code, 403)
+
+    def test_superuser_can_remove_invited_staff_admin(self):
+        superuser = User.objects.create_user(
+            username="superadmin",
+            email="superadmin@example.com",
+            password="SuperPass1!",
+            role=User.ROLE_ORGANIZATION,
+            is_staff=True,
+            is_superuser=True,
+        )
+        client = APIClient()
+        client.force_authenticate(user=superuser)
+
+        response = client.delete(f"/api/admin/admins/{self.admin.id}/")
+
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(User.objects.filter(id=self.admin.id).exists())
+
+    def test_staff_admin_cannot_remove_another_admin(self):
+        other_staff = User.objects.create_user(
+            username="other-staff",
+            email="other-staff@example.com",
+            password="OtherPass1!",
+            role=User.ROLE_ORGANIZATION,
+            is_staff=True,
+        )
+
+        response = self.client.delete(f"/api/admin/admins/{other_staff.id}/")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.filter(id=other_staff.id).exists())
+
+    def test_superuser_cannot_remove_another_superuser(self):
+        superuser = User.objects.create_user(
+            username="superadmin",
+            email="superadmin@example.com",
+            password="SuperPass1!",
+            role=User.ROLE_ORGANIZATION,
+            is_staff=True,
+            is_superuser=True,
+        )
+        other_superuser = User.objects.create_user(
+            username="other-superadmin",
+            email="other-superadmin@example.com",
+            password="OtherSuperPass1!",
+            role=User.ROLE_ORGANIZATION,
+            is_staff=True,
+            is_superuser=True,
+        )
+        client = APIClient()
+        client.force_authenticate(user=superuser)
+
+        response = client.delete(f"/api/admin/admins/{other_superuser.id}/")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(User.objects.filter(id=other_superuser.id).exists())
+
+    def test_superuser_cannot_remove_own_account(self):
+        superuser = User.objects.create_user(
+            username="superadmin",
+            email="superadmin@example.com",
+            password="SuperPass1!",
+            role=User.ROLE_ORGANIZATION,
+            is_staff=True,
+            is_superuser=True,
+        )
+        client = APIClient()
+        client.force_authenticate(user=superuser)
+
+        response = client.delete(f"/api/admin/admins/{superuser.id}/")
+
+        # Superusers are excluded from this endpoint's queryset entirely, so a
+        # superuser can never remove themselves (or any other superuser) here.
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(User.objects.filter(id=superuser.id).exists())

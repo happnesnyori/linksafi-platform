@@ -2022,6 +2022,35 @@
   color: #6b7f7c;
 }
 
+.admin-catalog-item-editing {
+  flex-wrap: wrap;
+}
+
+.admin-catalog-edit-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.admin-catalog-edit-select {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.admin-catalog-edit-error {
+  flex-basis: 100%;
+  margin-top: 4px;
+}
+
+.admin-catalog-edit-textarea {
+  flex-basis: 100%;
+  margin-top: 4px;
+  font-size: 13px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
 .admin-admins-list {
   display: flex;
   flex-direction: column;

@@ -33,6 +33,16 @@ export const formatDate = (value) => {
     }).format(date);
 };
 
+export const normalizeServices = (services) => {
+    const list = new Set((Array.isArray(services) ? services : []).filter(Boolean));
+    if (list.has('cleaning') && list.has('decoration')) {
+        list.add('both');
+    } else {
+        list.delete('both');
+    }
+    return [...list];
+};
+
 export const formatService = (service) => {
     if (!service) return '';
     if (typeof service === 'object') return service.name || service.service?.name || '';

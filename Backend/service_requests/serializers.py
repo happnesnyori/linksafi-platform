@@ -29,6 +29,9 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
     organization = UserSerializer(read_only=True)
     company = CompanySerializer(read_only=True)
     company_id = serializers.IntegerField(write_only=True)
+    contact_name = serializers.ReadOnlyField()
+    contact_email = serializers.ReadOnlyField()
+    contact_phone = serializers.ReadOnlyField()
 
     class Meta:
         model = ServiceRequest
@@ -45,6 +48,10 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
             "location",
             "requested_date",
             "description",
+            "preferred_contact",
+            "contact_name",
+            "contact_email",
+            "contact_phone",
             "status",
             "response_note",
             "created_at",
@@ -54,6 +61,9 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
             "id",
             "organization",
             "company",
+            "contact_name",
+            "contact_email",
+            "contact_phone",
             "status",
             "response_note",
             "created_at",
@@ -91,6 +101,7 @@ class PublicServiceRequestSerializer(serializers.ModelSerializer):
             "location",
             "requested_date",
             "description",
+            "preferred_contact",
             "status",
             "created_at",
         )
@@ -113,6 +124,18 @@ class PublicServiceRequestSerializer(serializers.ModelSerializer):
         if value not in allowed:
             raise serializers.ValidationError("Invalid service.")
         return value
+
+    def validate(self, attrs):
+        preferred = attrs.get("preferred_contact", ServiceRequest.CONTACT_EMAIL)
+        if preferred == ServiceRequest.CONTACT_EMAIL and not attrs.get("guest_email"):
+            raise serializers.ValidationError(
+                {"guest_email": "Provide an email address so the company can respond by email."}
+            )
+        if preferred == ServiceRequest.CONTACT_PHONE and not attrs.get("guest_phone"):
+            raise serializers.ValidationError(
+                {"guest_phone": "Provide a phone number so the company can respond by phone."}
+            )
+        return attrs
 
     def create(self, validated_data):
         company_id = validated_data.pop("company_id")

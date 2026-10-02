@@ -36,3 +36,21 @@ export const getCurrentUser = async () => {
     const response = await api('/auth/me/');
     return response;
 };
+
+export const requestPasswordReset = async (email) => {
+    const response = await api('/auth/password-reset/', {
+        method: 'POST',
+        body: { email },
+        skipAuth: true,
+    });
+    return response;
+};
+
+export const confirmPasswordReset = async ({ uid, token, newPassword }) => {
+    const response = await api('/auth/password-reset/confirm/', {
+        method: 'POST',
+        body: { uid, token, new_password: newPassword },
+        skipAuth: true,
+    });
+    return response;
+};

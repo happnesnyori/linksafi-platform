@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Mail, Phone } from 'lucide-react';
 import CompanyLayout from '../../layouts/CompanyLayout';
 import Button from '../../components/Button';
 import StatusBadge from '../../components/StatusBadge';
@@ -112,23 +113,44 @@ export default function RequestDetails() {
                                 <h1 className="page-title">Request #{request.id}</h1>
                                 <StatusBadge status={request.status} />
                             </div>
-                            <p className="page-subtitle">From {request.organization?.name}</p>
+                            <p className="page-subtitle">From {request.contact_name || request.organization?.name || request.guest_name || 'Guest'}</p>
                         </div>
 
                         <div style={{ marginBottom: '40px' }}>
-                            <h2 className="section-title">Organization</h2>
+                            <h2 className="section-title">Contact</h2>
                             <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '20px' }}>
                                 <div style={{ fontSize: '18px', fontWeight: 600, color: '#111111', marginBottom: '8px' }}>
-                                    {request.organization?.name}
+                                    {request.contact_name || request.organization?.name || request.guest_name || 'Guest'}
                                 </div>
-                                <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-                                    Type: {request.organization?.organizationType}
-                                </div>
+                                {request.organization?.organizationType && (
+                                    <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
+                                        Type: {request.organization.organizationType}
+                                    </div>
+                                )}
                                 <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
-                                    {request.organization?.email} • {request.organization?.phone}
+                                    {(request.contact_email || request.organization?.email) || 'No email provided'}
+                                    {' • '}
+                                    {(request.contact_phone || request.organization?.phone) || 'No phone provided'}
+                                </div>
+                                <div
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        color: '#166534',
+                                        background: '#dcfce7',
+                                        padding: '4px 10px',
+                                        borderRadius: '999px',
+                                        marginBottom: '16px',
+                                    }}
+                                >
+                                    {request.preferred_contact === 'phone' ? <Phone size={12} /> : <Mail size={12} />}
+                                    Prefers to be contacted by {request.preferred_contact === 'phone' ? 'phone — call them directly' : 'email — sent automatically when you respond'}
                                 </div>
                                 <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                    Location: {request.organization?.location}
+                                    Location: {request.organization?.location || request.location || 'Not specified'}
                                 </div>
                             </div>
                         </div>

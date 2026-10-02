@@ -112,45 +112,6 @@ export const adminService = {
         return response;
     },
 
-    // Customers (users)
-    getCustomers: async (filters = {}, page = 1, pageSize = 10) => {
-        const params = new URLSearchParams();
-        if (filters.role) params.append('role', filters.role);
-        if (filters.is_active !== undefined && filters.is_active !== '') params.append('is_active', filters.is_active);
-        if (filters.search) params.append('search', filters.search);
-        params.append('page', page);
-        params.append('page_size', pageSize);
-        const queryString = params.toString();
-        const endpoint = `/admin/users/${queryString ? `?${queryString}` : ''}`;
-        const response = await api(endpoint);
-        return response;
-    },
-
-    getCustomer: async (id) => {
-        const response = await api(`/admin/users/${id}/`);
-        return response;
-    },
-
-    getCustomerRequests: async (id) => {
-        const response = await api(`/admin/users/${id}/requests/`);
-        return response;
-    },
-
-    updateCustomer: async (id, data) => {
-        const response = await api(`/admin/users/${id}/`, {
-            method: 'PATCH',
-            body: data,
-        });
-        return response;
-    },
-
-    deleteCustomer: async (id) => {
-        const response = await api(`/admin/users/${id}/`, {
-            method: 'DELETE',
-        });
-        return response;
-    },
-
     // Service Requests
     getRequests: async (filters = {}, page = 1, pageSize = 10) => {
         const params = new URLSearchParams();
@@ -312,6 +273,13 @@ export const adminService = {
         const response = await api('/admin/admins/invite/', {
             method: 'POST',
             body: data,
+        });
+        return response;
+    },
+
+    removeAdmin: async (id) => {
+        const response = await api(`/admin/admins/${id}/`, {
+            method: 'DELETE',
         });
         return response;
     },
